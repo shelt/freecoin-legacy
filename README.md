@@ -23,3 +23,7 @@
 * Address generation
  * NOTE: public addresses are: hex(pubkey)[2:]
 * Automatic target calculation
+* Blockchain updating:
+ * The blockchain file should be updated upon new block (via irc)
+ * The old object should then be disbanded
+ * New blockchain objects should verify their hashes
