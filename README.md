@@ -20,3 +20,5 @@
 * IRC block submission and listening
 * Transaction adding after assertions
 * Divide main.py into respective files
+* Address generation
+ * NOTE: public addresses are: hex(pubkey)[2:]
