@@ -22,3 +22,4 @@
 * Divide main.py into respective files
 * Address generation
  * NOTE: public addresses are: hex(pubkey)[2:]
+* Automatic target calculation
