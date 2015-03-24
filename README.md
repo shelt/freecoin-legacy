@@ -2,6 +2,22 @@
 
 **freecoin** is a lightweight cryptocurrency implementation with a focus on portability and comprehension.
 
+## Rules
+
+#### Transaction validation
+- `count(OUTs) < count(INs)`, unless the transaction generates new coins.
+- For each `OUT`, if `out_amount > in_amount`, add change for that address (and sum after).
+- For each `OUT`, `out_amount <= sum(all_cooresponding_in_amounts)`.
+- Zero-amount outputs are forbidden.
+- TXHash is valid.
+
+#### Block validation
+- Block author is the same as generation tx payout address.
+- There is only one generation tx.
+- All TXHashes are valid.
+- Blockhash + nonce is valid.
+
+
 #### Transaction process
 
 - get_transaction
@@ -11,6 +27,7 @@
 - assert inputs_signed
 - assert for each out: (ins(with out_i) combined) >= out amount
  - if greater, return surplus back to sender in a new out
+
 
 
 #### To-Do
@@ -27,3 +44,4 @@
  * The blockchain file should be updated upon new block (via irc)
  * The old object should then be disbanded
  * New blockchain objects should verify their hashes
+* **Detail other verification processes in README**
