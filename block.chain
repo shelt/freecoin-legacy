@@ -5,6 +5,7 @@
         "prev":"",
         "start_time": "1427062505",
         "solve_time": "1427062506",
+        "author": "8cb824e97ab63083e21876d9041b01008d70ad3e0a0c8b9a4fca5e4ffc26caf492a3bf1a85b8eff86ff0d7422d8eecdfdf9b008eac868ab34b9527e8059f2c01",
 		"transactions":
         {
 			"1bb6509d3a1c5dd2a39c4e48b372b86c95eec9dc083654431aa71ea0bc0767b8":
@@ -21,7 +22,7 @@
                     }
                 ]
             },
-            "7dfb1032b7c9d57ae5e396c6ec12b3991319a55712d5d93e2c192594ad1f09d6":
+            "4b252922a1581c8a6dfd4bba25dd43f3f6bac043b6707d82f471d259f47d1d61":
             {
                 "time": "1427062505",
                 "ins":
@@ -30,14 +31,18 @@
                         "tx": "1bb6509d3a1c5dd2a39c4e48b372b86c95eec9dc083654431aa71ea0bc0767b8",
                         "tx_i": "00",
                         "out_i": "00",
-                        "sig":"4929a56f4c86d5627bfcc6974d9c5427367fdf6fc911b8200386098bb5f4315657fa74a39775f75f2ebc6970904c9df8959da205d54be343246143b40c25f1eb"
+                        "sig":"7f4660fa7974af93e592e6ae8f8fe6871406842e72b75d258f47f81945a4772c763aca160b8b6c213a8816271df14875bb7b5b07577cf16193ae891eee007385"
                     }
                 ],
                 "outs":
                 [
                     {
-                        "address": "82321151d85f79a9046ed4e73a9715156d22b5e22783d1db8ef78cde98a113b536a52cb70f5851496d8273fa3c09f07c972d37c7cf9977c9e55c61eb0329df7d",
-                        "amount": "1"
+                        "address": "dd8576da9d5c9895c6e159195c69f7da1904d2b14ebdfa96b284e37f3c86cf688c53c2385bcaa9b869fc345db8368e4317a4dfb4a64ecc939bd1aecd97936767",
+                        "amount": "03"
+                    },
+                    {
+                        "address": "8cb824e97ab63083e21876d9041b01008d70ad3e0a0c8b9a4fca5e4ffc26caf492a3bf1a85b8eff86ff0d7422d8eecdfdf9b008eac868ab34b9527e8059f2c01",
+                        "amount": "47"
                     }
                 ]
             }
