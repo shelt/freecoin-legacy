@@ -5,15 +5,14 @@
 ## Rules
 
 #### Transaction validation
-- `count(OUTs) < count(INs)`, unless the transaction generates new coins.
+- `count(OUTs) < count(INs)`, unless it's a coinbase transaction in which the counts must be 1 and 0.
 - For each `OUT`, if `out_amount > in_amount`, add change for that address (and sum after).
 - For each `OUT`, `out_amount <= sum(all_cooresponding_in_amounts)`.
 - Zero-amount outputs are forbidden.
 - TXHash is valid.
 
 #### Block validation
-- Block author is the same as generation tx payout address.
-- There is only one generation tx.
+- There is only one coinbase tx.
 - All TXHashes are valid.
 - Blockhash + nonce is valid.
 
@@ -45,3 +44,4 @@
  * The old object should then be disbanded
  * New blockchain objects should verify their hashes
 * **Detail other verification processes in README**
+* **Reduce need for extensive verification (add implicit verification)**

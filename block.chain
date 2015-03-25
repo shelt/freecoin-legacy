@@ -1,11 +1,11 @@
 {
     "0000000000000000000000000000000000000000000000000000000000000000":
     {
+        "ver":"1",
         "nonce": "00",
         "prev":"",
         "start_time": "1427062505",
         "solve_time": "1427062506",
-        "author": "8cb824e97ab63083e21876d9041b01008d70ad3e0a0c8b9a4fca5e4ffc26caf492a3bf1a85b8eff86ff0d7422d8eecdfdf9b008eac868ab34b9527e8059f2c01",
 		"transactions":
         {
 			"1bb6509d3a1c5dd2a39c4e48b372b86c95eec9dc083654431aa71ea0bc0767b8":

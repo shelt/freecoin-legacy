@@ -1,6 +1,6 @@
 import rsa
-from modules import crypto
-from modules import util
+from module import crypto
+from module import util
 from binascii import hexlify,unhexlify
 
 
