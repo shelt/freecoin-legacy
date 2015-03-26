@@ -12,7 +12,6 @@ miner = '82321151d85f79a9046ed4e73a9715156d22b5e22783d1db8ef78cde98a113b536a52cb
 wb = WorkBlock(bc,prevblock,miner)
 
 # Testing
-
 tx = {
             'time': '1427089580',
             'outs':
@@ -38,9 +37,7 @@ privkey1 = (50832794844014293240730569838411832824317764546812998881058053856487
 
 privkey2 = (6968223843230798705543442829794906286227291833860491327471375594944479345114184147,1664988739484861807187105005799608620354005132287471160152809096849779613,4819287325787109228139822323811514448951413276363465355747835384658054639311320686678997358399315479692586720056971693513646408262534014599316446871051081)
 
-
-
-#wb.verify_tx_integrity('4b252922a1581c8a6dfd4bba25dd43f3f6bac043b6707d82f471d259f47d1d61',tx) #TODO make this implemented in blockchain init
+#wb.verify_tx_integrity('4b252922a1581c8a6dfd4bba25dd43f3f6bac043b6707d82f471d259f47d1d61',tx) # Implement in blockchain init
 
 #tx = wb.get_tx_h('4b252922a1581c8a6dfd4bba25dd43f3f6bac043b6707d82f471d259f47d1d61')
 
@@ -53,12 +50,3 @@ except BlockException as e:
     print("FAILED TO ADD TRANSACTION: " + str(e))
 
 
-'''
-- get transaction
-- assert not in newblock
-- assert not in blockchain
-- assert inputs_useable
-- assert inputs_signed
-- assert for each out: (ins(with out_i) combined) >= outs amount
--            if greater, return surplus back to sender in a new out
-'''
