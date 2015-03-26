@@ -5,17 +5,13 @@ from Class.Blockchain import Blockchain
 from Class.WorkBlock import WorkBlock
 from module import txgen
 
-
-# UNHEXLIFY: convert hex string to bytes
-# HEXLIFY  : convert bytes to hex string
-
-
-# INIT
+# Init
 bc = Blockchain('block.chain')
 prevblock = '0000000000000000000000000000000000000000000000000000000000000000'
 miner = '82321151d85f79a9046ed4e73a9715156d22b5e22783d1db8ef78cde98a113b536a52cb70f5851496d8273fa3c09f07c972d37c7cf9977c9e55c61eb0329df7d'
 wb = WorkBlock(bc,prevblock,miner)
 
+# Testing
 
 tx = {
             'time': '1427089580',
@@ -49,7 +45,6 @@ privkey2 = (69682238432307987055434428297949062862272918338604913274713755949444
 #tx = wb.get_tx_h('4b252922a1581c8a6dfd4bba25dd43f3f6bac043b6707d82f471d259f47d1d61')
 
 # note that at the moment, block.chain hashes need recalculation.
-# thusly, signatures do as well.
 print(txgen.sign_input(tx,0,privkey2))
 
 try:

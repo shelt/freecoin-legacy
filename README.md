@@ -1,6 +1,14 @@
 # freecoin
 
-**freecoin** is a lightweight cryptocurrency implementation with a focus on portability and comprehension.
+**freecoin** is a lightweight cryptocurrency implementation with a focus on portability and comprehension. It is in **early alpha** at the moment.
+
+### What is a cryptocurrency?
+
+A cryptocurrency is a currency that is functionally possible because of cryptography. Without the need for identification, a user is able to prove they were the recipient of a past transaction. This is only made possible because of math and our inability to factor very large numbers.
+
+### What does it mean to be "decentralized"?
+
+With banks that deal with regular currencies, all regulation happens in one place. Storing the amount of money each person has and the processing of transactions all happens on a few servers. Though they probably take backup and security very seriously, banks (and the governments that regulate them) represent a central authority over a vastly powerful resource. With decentralized currencies, transactions are processed and balances are stored by the people. Everyone agrees on how things should work, so it works. 
 
 ## Rules
 
