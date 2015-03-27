@@ -4,15 +4,13 @@ from binascii import hexlify,unhexlify
 import sys
 import math
 
-# My HP Pavlilion laptop can do about 80K hashes/min
-# it should take 800K hashes to find a block
-# it should take 10 minutes to generate 800K
 def mine(target):
+    # Test values
     ver = 2
     prev_block = "000000000000000117c80378b8da0e33559b5997f2ad55e2f7d18ec1975b9717"
     mrkl_root = "871714dcbae6c8193a2bb9b2a69fe1c0440399f38d94b3a0f1b447275a29978a"
     time_ = 0x53058b35
-    target = 9999999999999999999999999999999999999999999999999999999999999999994195203
+    target = 0x5a8e89d75252446eb5d5d5b1cc5edf20a1a059e10c9ffffffffffffa76d03
     
 
     
