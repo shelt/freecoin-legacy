@@ -12,8 +12,8 @@ S_DIR = src
 
 
 
-_HEADERS = transactions.h shared.h
-_OBJECTS = transactions.o testing.o
+_HEADERS = shared.h crypto.h transactions.h 
+_OBJECTS = crypto.o transactions.o testing.o 
 default: all
 
 
@@ -31,4 +31,4 @@ all: $(OBJECTS)
 
 clean:
 	-rm -f $(OBJECTS)
-	-rm -r $(B_DIR)
+	-rm -f $(B_DIR)/*.exe
