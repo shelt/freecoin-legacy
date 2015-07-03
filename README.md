@@ -1,6 +1,6 @@
 # freecoin
 
-**freecoin** is a lightweight cryptocurrency implementation with a focus on portability and comprehension. It is in **early alpha** at the moment.
+**freecoin** is a lightweight cryptocurrency with a focus on comprehension. It is in an **early development stage** at the moment.
 
 ### What is a cryptocurrency?
 
