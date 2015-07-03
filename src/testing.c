@@ -19,6 +19,6 @@ int main()
     
     unchar* ins[1];
     ins[1] = malloc(256);
-    memcpy(ins[1], 0x1bb6509d3a1c5dd2a39c4e48b372b86c95eec9dc083654431aa71ea0bc0767b8, 256);
+    memcpy(ins[1], , 256);
     generate_transaction(&header, unchar ins[], unchar outs[], unint in_count, unint out_count, unchar* tx);
 };
