@@ -1,10 +1,18 @@
-#define uchar unsigned char // 8-bit byte
-#define uint unsigned int // 32-bit word
+#include "shared.h"
 
-typedef struct _SHA256_CTX SHA256_CTX;
+
+
+typedef struct 
+{
+   unchar data[64];
+   unint datalen;
+   unint bitlen[2];
+   unint state[8];
+} SHA256_CTX;
+
 
 void sha256_init(SHA256_CTX *ctx);
 
-void sha256_update(SHA256_CTX *ctx, uchar data[], uint len);
+void sha256_update(SHA256_CTX *ctx, unchar data[], unint len);
 
-void sha256_final(SHA256_CTX *ctx, uchar hash[]);
+void sha256_final(SHA256_CTX *ctx, unchar hash[]);

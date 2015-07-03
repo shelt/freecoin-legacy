@@ -1,8 +1,18 @@
-extern unsigned char __version = 1;
+#ifndef SHARED_H
+#define SHARED_H
+
+
+#define unchar unsigned char 
+#define unint unsigned int
+
+ const unchar __version;
 
 // TRANSACTIONS
-extern unsigned int TX_HEADER_SIZE = 8;
-extern unsigned int TX_INPUT_BYTESIZE = 32;   // The bytesize of 1 input.
-extern unsigned int TX_OUTPUT_BYTESIZE = 260; // ''
+ const unint TX_HEADER_SIZE;
+ const unint TX_INPUT_BYTESIZE;
+ const unint TX_OUTPUT_BYTESIZE;
 
-extern unsigned int SHA_SIZE = 32;
+ const unint SHA_SIZE;
+
+
+#endif

@@ -1,8 +1,18 @@
-#define uchar unsigned char
+#ifndef TRANS_H
+#define TRANS_H
+
+#include "shared.h"
+
+typedef struct
+{
+    unsigned short size;
+    unsigned short version;
+    unsigned int time;
+} Header_tx;
+
+void generate_transaction(Header_tx* header, unchar ins[], unchar outs[], unint in_count, unint out_count, unchar* tx);
+
+void generate_merkle_root(unchar* txs[], unsigned int tx_count, unchar hash[]);
 
 
-typedef struct _Header_tx Header_tx;
-
-void generate_transaction(Header_tx* header, uchar* ins, uchar* outs, uint in_count, uint out_count, uchar* tx);
-
-void generate_merkle_root(Transaction* txs, unsigned int tx_count, uchar hash[]);
+#endif
