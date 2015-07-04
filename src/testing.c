@@ -13,6 +13,11 @@
 // What is the input signature a signature of?
 // functions to build inputs and outputs
 // input and output counts should be larger than 1 byte. more than 255 should be allowed
+// we need to store the tx hash in the block header.
+// move all pointer astrixes to prefix form
+// fix crypto.c formatting
+// find memory leaks with malloc
+// unchar should be used everywhere
 
 
 unsigned char hexc_to_int(char c)
@@ -24,34 +29,53 @@ unsigned char hexc_to_int(char c)
     else return 255;
 }
 
-unsigned char* hexstr_to_bytes(char* string, size_t bytes)
+// TODO THIS SHOULD NOT ALLOCATE MEMORY. A POINTER TO ALLOCATED MEMORY SHOULD BE PASSED TO IT.
+void hexstr_to_bytes(unchar* string, size_t bytes, unchar* bytearr)
 {
-    unsigned char* bytearr = malloc(bytes * sizeof(char*));
     int byte_pos, str_pos;
     for(byte_pos=0, str_pos=0;   byte_pos<bytes;   byte_pos++ ,str_pos+=2)
         bytearr[byte_pos] = (hexc_to_int(string[str_pos]) << 4) | (hexc_to_int(string[str_pos+1]));
-    return bytearr;
 }
 
 int main()
 {
     // At the moment, these test values are arbitrary and are not real hashes of previous txs or blocks
-    
+    ///*
     Header_tx* header = malloc(sizeof(Header_tx*));
     header->in_count = 1;
     header->out_count = 1;
     header->version = 1;
     header->time = 1435969063;
     
-    unsigned char* ins[1];
-    ins[0] = hexstr_to_bytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", TX_INPUT_BYTESIZE);
+    // the following few things could be done in a loop in implementation for all the ins and outs
+    // Initialize xput pointer arrays
+    unchar* ins[1];
+    unchar* outs[1];
     
-    unsigned char* outs[1];
-    outs[0] = hexstr_to_bytes("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", TX_OUTPUT_BYTESIZE);
+    // Allocating xput bytes
+    ins[0] = malloc(TX_INPUT_BYTESIZE);
+    outs[0] = malloc(TX_OUTPUT_BYTESIZE);
+    
+    hexstr_to_bytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", TX_INPUT_BYTESIZE, ins[0]);
+    
+    hexstr_to_bytes("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000001", TX_OUTPUT_BYTESIZE, outs[0]);
     
 
     unchar* tx;
     generate_transaction(header, ins, outs, 1, 1, tx);
+    //*/
+    
+    /*
+    unint* a = malloc(32);
+    *a = hexstr_to_bytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 32);
+    unint* hash = malloc(32);
+    hash_transactions(a,a,hash);
+    
+    int i;
+    for(i=0; i<32; i++)
+        printf("%x", hash[i]);
+        */
+    
 };
 
     //char* k = hexstr_to_bytes("1bff", 2);

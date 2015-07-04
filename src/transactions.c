@@ -62,16 +62,30 @@ void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, unint 
 
 }
 
-void generate_merkle_root(unchar* txs[], unsigned int tx_count, unchar hash[]) //Hash must be of size SHA_BYTESIZE
+
+/////////////////////////
+// MERKLE TREE HASHING //
+/////////////////////////
+
+void hash_transactions(unchar* tx1, unchar* tx2, unchar* hash)
 {
-    SHA256_CTX ctx;
-    sha256_init(&ctx);
+    SHA256_CTX* ctx;
+    sha256_init(ctx);
+    
+    sha256_update(ctx, tx1, 32);
+    sha256_update(ctx, tx2, 32);
+    sha256_final(ctx, hash);
+}
+
+void generate_merkle_root(unchar** txs, unsigned int tx_count, unchar hash[]) //Hash must be of size SHA_BYTESIZE
+{
+
     
     for(int i=0; i<tx_count; i++)
     {
-        //sha256_update(&ctx, *(txs[i]),  (( *(txs[i]) << 8) | *(txs[i]))); // MAIN TODO HERE (see gcc errors)
+        // // MAIN TODO HERE (see gcc errors)
     };
     
-    sha256_final(&ctx, hash);
+    
     printf(hash);//debuggery
 };
