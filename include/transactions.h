@@ -5,6 +5,7 @@
 
 typedef struct
 {
+    unsigned short size;
     unsigned short in_count;
     unsigned short out_count;
     unsigned short version;
