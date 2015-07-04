@@ -14,7 +14,7 @@ S_DIR = src
 
 _HEADERS = shared.h crypto.h transactions.h 
 _OBJECTS = crypto.o transactions.o testing.o 
-default: all
+default: testing
 
 
 
@@ -26,7 +26,7 @@ OBJECTS = $(patsubst %,$(O_DIR)/%,$(_OBJECTS))
 $(O_DIR)/%.o: $(S_DIR)/%.c $(HEADERS)
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-all: $(OBJECTS)
+testing: $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(B_DIR)/$@ $(CFLAGS)
 
 clean:
