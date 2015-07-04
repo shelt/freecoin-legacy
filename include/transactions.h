@@ -5,12 +5,13 @@
 
 typedef struct
 {
-    unsigned short size;
+    unsigned short in_count;
+    unsigned short out_count;
     unsigned short version;
     unsigned int time;
 } Header_tx;
 
-void generate_transaction(Header_tx* header, unchar ins[], unchar outs[], unint in_count, unint out_count, unchar* tx);
+void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, unint in_count, unint out_count, unchar* tx);
 
 void generate_merkle_root(unchar* txs[], unsigned int tx_count, unchar hash[]);
 

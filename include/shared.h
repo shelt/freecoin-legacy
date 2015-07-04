@@ -1,18 +1,15 @@
 #ifndef SHARED_H
 #define SHARED_H
 
-
 #define unchar unsigned char 
 #define unint unsigned int
 
- const unchar __version;
+#define __version 1
+#define TX_HEADER_SIZE 8
+#define TX_INPUT_BYTESIZE 150  // The bytesize of 1 input.  [IN_TX .. SIG]  32B + 128B
+#define TX_OUTPUT_BYTESIZE 132 // The bytesize of 1 output. [PUBKEY .. AMT] 128B + 4B
+#define SHA_SIZE 32
 
-// TRANSACTIONS
- const unint TX_HEADER_SIZE;
- const unint TX_INPUT_BYTESIZE;
- const unint TX_OUTPUT_BYTESIZE;
-
- const unint SHA_SIZE;
 
 
 #endif
