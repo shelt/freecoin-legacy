@@ -18,17 +18,18 @@ With banks that deal with regular currencies, all regulation happens in one plac
 ### To-Do
 * Blocks
 * What is the input signature a signature of?
-* functions to build inputs and outputs
-* input and output counts should be larger than 1 byte. more than 255 should be allowed
-* we need to store the tx hash in the block header.
-* move all pointer astrixes to prefix form
+* Functions to build inputs and outputs
+* Input and output counts should be larger than 1 byte. more than 255 should be allowed
+* Need to store the tx hash in the block header.
+* Move all pointer astrixes to prefix form
 * Fix crypto.c formatting
 * Find memory leaks
-* unchar should be used everywhere
-* remove all functional memory allocation.
+* `unchar` should be used everywhere
+* Remove all functional memory allocation.
 * Move #includes that are relevant to the header to the header, and take them out of the source.
-* replace arrays of pointers with appropriate name (_ptrs)
-* create functions to extract data from transactions
+* Replace arrays of pointers with appropriate name (..._ptrs)
+* Create functions to extract data from transactions
+* Better documentation
 
 
 
