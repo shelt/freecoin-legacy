@@ -8,30 +8,6 @@
 
 #define unchar unsigned char
 #define unint unsigned int
-/*
-    General coding guidelines
-    * Variables/parameters that refer to the count of an array should use size_t. Bytesizes should not. If you're smarter than me and you think they should, please let me know.
-    * 
-    
-
-*/
-
-
-// Replace for loops with declaration outside forloop to be non C99 compliant
-// What is the input signature a signature of?
-// functions to build inputs and outputs
-// input and output counts should be larger than 1 byte. more than 255 should be allowed
-// we need to store the tx hash in the block header.
-// move all pointer astrixes to prefix form
-// fix crypto.c formatting
-// find memory leaks with malloc
-// unchar should be used everywhere
-// remove all functional memory allocation.
-// Move #includes that are relevant to the header to the header, and take them out of the source.
-// replace arrays of pointers with appropriate name (_ptrs)
-
-// create functions to extract data from transactions
-
 
 unsigned char hexc_to_int(char c)
 {
