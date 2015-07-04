@@ -53,12 +53,6 @@ void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, size_t
         memcpy(&tx[tx_index], outs[i], TX_OUTPUT_BYTESIZE);
         tx_index += TX_OUTPUT_BYTESIZE;
     }
-    
-    //debuggery
-    
-    //for(i=0; i<size; i++)
-    //    printf("%02x", tx[i]);
-
 }
 
 size_t get_tx_size(unchar *tx)
@@ -89,8 +83,8 @@ size_t get_tx_size(unchar *tx)
 */
 void generate_merkle_root(unchar** txs, size_t tx_count, unchar* outhash)
 {
-    unchar *tree_hashes[tx_count];
-    unchar *buffer = malloc(SHA256_SIZE);
+    unchar *tree_hashes[tx_count];                // An array of pointers to leaves
+    unchar *buffer = malloc(SHA256_SIZE);         // The buffer where SHA256s are generated.
     SHA256_CTX* ctx = malloc(sizeof(SHA256_CTX));
     
     // Allocate hashspace
