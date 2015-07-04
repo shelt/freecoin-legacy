@@ -23,7 +23,7 @@
     0x00          
 
 */
-void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, unint in_count, unint out_count, unchar* tx)
+void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, size_t in_count, size_t out_count, unchar* tx)
 {
     // These are computed here for use in for-loop end cases. TODO NONE OF THESE ARE USED !!!?!?!!?
     unint ins_size = in_count * TX_INPUT_BYTESIZE;    // Side of ins combined

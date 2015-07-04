@@ -8,8 +8,15 @@
 
 #define unchar unsigned char
 #define unint unsigned int
+/*
+    General coding guidelines
+    * Variables/parameters that refer to the count of an array should use size_t. Bytesizes should not. If you're smarter than me and you think they should, please let me know.
+    * 
+    
 
-// TODO replace length attribs with size_t type
+*/
+
+
 // Replace for loops with declaration outside forloop to be non C99 compliant
 // What is the input signature a signature of?
 // functions to build inputs and outputs
@@ -89,8 +96,9 @@ int main()
     
     generate_merkle_root(txs, 6, hash);
     
+    printf("Merkle root: ");
     int i;
-    for(i=0; i<size; i++)
-        printf("%02x", tx1[i]);
+    for(i=0; i<SHA256_SIZE; i++)
+        printf("%02x", hash[i]);
     return 0;
 };
