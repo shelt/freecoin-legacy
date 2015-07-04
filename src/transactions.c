@@ -78,6 +78,8 @@ size_t get_tx_size(unchar *tx)
        -8ebc6a-     -d5e414-      -89b77c-
        |      |     |      |      |      |
     2d7f4d 3407a8 5edf5a 65c356 89aa32 e3e69c
+       |      |      |      |      |      |
+    sometx sometx sometx sometx sometx sometx
 
     Accepts an array of pointers to transactions.
     Generates hashes of those transactions.
