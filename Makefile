@@ -2,7 +2,7 @@
 #   $@ is file being generated
 
 CC=gcc
-CFLAGS=-I$(I_DIR) -std=c99
+CFLAGS=-I$(I_DIR)
 
 I_DIR = include
 L_DIR = lib
