@@ -47,7 +47,8 @@ void sha256_transform(SHA256_CTX *ctx, unchar data[])
    g = ctx->state[6];
    h = ctx->state[7];
    
-   for (i = 0; i < 64; ++i) {
+   for (i = 0; i < 64; ++i)
+   {
       t1 = h + EP1(e) + CH(e,f,g) + k[i] + m[i];
       t2 = EP0(a) + MAJ(a,b,c);
       h = g;
@@ -85,14 +86,16 @@ void sha256_init(SHA256_CTX *ctx)
    ctx->state[7] = 0x5be0cd19;
 }
 
-void sha256_update(SHA256_CTX *ctx, unchar data[], unint len)
+void sha256_update(SHA256_CTX *ctx, unchar data[], size_t len)
 {  
    unint t,i;
    
-   for (i=0; i < len; ++i) { 
+   for (i=0; i < len; ++i)
+   { 
       ctx->data[ctx->datalen] = data[i]; 
       ctx->datalen++; 
-      if (ctx->datalen == 64) { 
+      if (ctx->datalen == 64)
+      { 
          sha256_transform(ctx,ctx->data);
          DBL_INT_ADD(ctx->bitlen[0],ctx->bitlen[1],512); 
          ctx->datalen = 0; 
@@ -107,12 +110,14 @@ void sha256_final(SHA256_CTX *ctx, unchar hash[])
    i = ctx->datalen; 
    
    // Pad whatever data is left in the buffer. 
-   if (ctx->datalen < 56) { 
+   if (ctx->datalen < 56)
+   { 
       ctx->data[i++] = 0x80; 
       while (i < 56) 
          ctx->data[i++] = 0x00; 
    }  
-   else { 
+   else
+   { 
       ctx->data[i++] = 0x80; 
       while (i < 64) 
          ctx->data[i++] = 0x00; 
@@ -134,7 +139,8 @@ void sha256_final(SHA256_CTX *ctx, unchar hash[])
    
    // Since this implementation uses little endian byte ordering and SHA uses big endian,
    // reverse all the bytes when copying the final state to the output hash. 
-   for (i=0; i < 4; ++i) { 
+   for (i=0; i < 4; ++i)
+   { 
       hash[i]    = (ctx->state[0] >> (24-i*8)) & 0x000000ff; 
       hash[i+4]  = (ctx->state[1] >> (24-i*8)) & 0x000000ff; 
       hash[i+8]  = (ctx->state[2] >> (24-i*8)) & 0x000000ff;
