@@ -18,8 +18,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 ### To-Do
 * Blocks
 * What is the input signature a signature of?
-* Functions to build inputs and outputs (as structs)
-* Input and output counts should be larger than 1 byte. more than 255 should be allowed
+* Functions to build inputs and outputs
 * Need to store the tx hash in the block header.
 * Move all pointer astrixes to prefix form
 * Fix crypto.c formatting

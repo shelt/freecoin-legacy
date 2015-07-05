@@ -15,7 +15,7 @@
     |    |    |    |         |    |          |     |
     |    |    |    time      |    signature  |     amount
     |    |    |              |               |
-    |    |    output_count   input_tx        out_address
+    |    |    output_count   ref_tx          out_address
     |    |
     |    input_count
     |
@@ -61,9 +61,27 @@ void generate_transaction(unshort version, unshort in_count, unshort out_count, 
     }
 }
 
+void generate_tx_input(unchar *ref_tx, unchar *sig, unchar *tx_input)
+{
+    memcpy(&tx_input[0], ref_tx, SHA256_SIZE);
+    memcpy(&tx_input[SHA256_SIZE], sig, RSA1024_SIZE);
+}
+void generate_tx_output(unchar *out_address, unint amount, unchar *tx_output)
+{
+    memcpy(&tx_output[0], out_address, RSA1024_SIZE);
+    // Convert int to byte array
+    int i;
+    unchar *amount_bytes = malloc(sizeof(unint));
+    amount_bytes[0] = (amount >> 24) & 0xFF;
+    amount_bytes[1] = (amount >> 16) & 0xFF;
+    amount_bytes[2] = (amount >>  8) & 0xFF;
+    amount_bytes[3] =  amount & 0xFF;
+    memcpy(&tx_output[RSA1024_SIZE], amount_bytes, sizeof(unint));
+}
+
+
 size_t get_tx_size(unchar *tx)
 {
-    
     return ((tx[2] << 8) | tx[3]) * TX_INPUT_BYTESIZE  + 
            ((tx[4] << 8) | tx[5]) * TX_OUTPUT_BYTESIZE + TX_HEADER_SIZE;
 }

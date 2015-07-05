@@ -36,21 +36,35 @@ int main()
     
     
     // the following few things could be done in a loop in implementation for all the ins and outs
-    // Initialize xput pointer arrays
     unchar* ins[1];
     unchar* outs[1];
     
-    // Allocating xput bytes
+    
     ins[0] = malloc(TX_INPUT_BYTESIZE);
     outs[0] = malloc(TX_OUTPUT_BYTESIZE);
     
-    hexstr_to_bytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", TX_INPUT_BYTESIZE, ins[0]);
+    ///// INPUT GENERATING /////
+    unchar *ref_tx = malloc(SHA256_SIZE);
+    hexstr_to_bytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", SHA256_SIZE, ref_tx);
     
-    hexstr_to_bytes("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000001", TX_OUTPUT_BYTESIZE, outs[0]);
-                            
+    unchar *sig = malloc(RSA1024_SIZE);
+    hexstr_to_bytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", RSA1024_SIZE, sig);
+    
+    
+    generate_tx_input(ref_tx, sig, ins[0]);
+    
+
+    
+    ///// OUTPUT GENERATING /////
+    unchar *out_address = malloc(RSA1024_SIZE);
+    hexstr_to_bytes("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", RSA1024_SIZE, out_address);
+    unint amount = 0x00000001;
+    generate_tx_output(out_address, amount, outs[0]);
+    
     unchar* tx0 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
     generate_transaction(version, in_count, out_count, time, ins, outs, tx0);
 
+    
     // MERKLE ROOT TESTING ///////////////////////////////////////////////////////////////////////
     size_t size = (TX_HEADER_SIZE + TX_INPUT_BYTESIZE + TX_OUTPUT_BYTESIZE); // This is only computable like this because we know there's only 1 in and 1 out.
     unchar* hash = malloc(SHA256_SIZE);
