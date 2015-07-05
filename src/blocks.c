@@ -15,3 +15,6 @@
     |
     freecoin_version
 */
+
+void generate_block(unchar version, unint time, unchar *prev_block_hash, *merkle_root, unint nonce, // Header variables
+                    unchar** txs, size_t tx_count);                                                 // Body variables

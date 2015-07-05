@@ -103,7 +103,7 @@ size_t get_tx_size(unchar *tx)
 
     Accepts an array of pointers to transactions.
     Generates hashes of those transactions.
-    Hashes those hashes in pairs called TREE HASHES.
+    Hashes those hashes in pairs. The results are TREE HASHES.
     If it's an odd number, the final one is hashed with itself.
     Process is repeated until one hash remains (the MERKLE ROOT).
 */
