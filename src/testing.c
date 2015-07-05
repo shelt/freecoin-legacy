@@ -30,9 +30,10 @@ int main()
 {
     //TRANSACTION GENERATION TESTING ////////////////////////////////////////////////////////////
     unshort version = 1;
-    unshort in_count = 1;
-    unshort out_count = 1;
+    size_t in_count = 1;
+    size_t out_count = 1;
     unint time = 1435969063;
+    
     
     // the following few things could be done in a loop in implementation for all the ins and outs
     // Initialize xput pointer arrays
@@ -46,11 +47,10 @@ int main()
     hexstr_to_bytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", TX_INPUT_BYTESIZE, ins[0]);
     
     hexstr_to_bytes("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000001", TX_OUTPUT_BYTESIZE, outs[0]);
-    
-
+                            
     unchar* tx0 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
-    generate_transaction(version, in_count, out_count, time, ins, outs, 1, 1, tx0);
-    
+    generate_transaction(version, in_count, out_count, time, ins, outs, tx0);
+
     // MERKLE ROOT TESTING ///////////////////////////////////////////////////////////////////////
     size_t size = (TX_HEADER_SIZE + TX_INPUT_BYTESIZE + TX_OUTPUT_BYTESIZE); // This is only computable like this because we know there's only 1 in and 1 out.
     unchar* hash = malloc(SHA256_SIZE);
