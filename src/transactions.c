@@ -23,7 +23,7 @@
 
 */
 void generate_transaction(unshort version, unshort in_count, unshort out_count, unint time, // Header variables
-                            unchar** ins, unchar** outs, unchar* tx)
+                            unchar **ins, unchar **outs, unchar *tx)
 {
     // These are computed here for use in for-loop tests. TODO
     //unint ins_size = in_count * TX_INPUT_BYTESIZE;    // Side of ins combined
@@ -107,11 +107,11 @@ size_t get_tx_size(unchar *tx)
     If it's an odd number, the final one is hashed with itself.
     Process is repeated until one hash remains (the MERKLE ROOT).
 */
-void generate_merkle_root(unchar** txs, size_t tx_count, unchar* outhash)
+void generate_merkle_root(unchar **txs, size_t tx_count, unchar *outhash)
 {
     unchar *tree_hashes[tx_count];                // An array of pointers to leaves
     unchar *buffer = malloc(SHA256_SIZE);         // The buffer where SHA256s are generated.
-    SHA256_CTX* ctx = malloc(sizeof(SHA256_CTX));
+    SHA256_CTX *ctx = malloc(sizeof(SHA256_CTX));
     
     // Allocate hashspace
     int i;

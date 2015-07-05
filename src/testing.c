@@ -18,7 +18,7 @@ unsigned char hexc_to_int(char c)
     else return 255;
 }
 
-void hexstr_to_bytes(unchar* string, size_t bytes, unchar* bytearr)
+void hexstr_to_bytes(unchar *string, size_t bytes, unchar *bytearr)
 {
     int byte_pos, str_pos;
     for(byte_pos=0, str_pos=0;   byte_pos<bytes;   byte_pos++ ,str_pos+=2)
@@ -36,8 +36,8 @@ int main()
     
     
     // the following few things could be done in a loop in implementation for all the ins and outs
-    unchar* ins[1];
-    unchar* outs[1];
+    unchar *ins[1];
+    unchar *outs[1];
     
     
     ins[0] = malloc(TX_INPUT_BYTESIZE);
@@ -61,7 +61,7 @@ int main()
     unint amount = 0x00000001;
     generate_tx_output(out_address, amount, outs[0]);
     
-    unchar* tx0 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
+    unchar *tx0 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
     generate_transaction(version, in_count, out_count, time, ins, outs, tx0);
 
     
@@ -81,7 +81,7 @@ int main()
     tx4=memcpy(tx4, tx3, size);
     tx5=memcpy(tx5, tx4, size);
 
-    unchar* txs[6] = {tx0,tx1,tx2,tx3,tx4,tx5};
+    unchar *txs[6] = {tx0,tx1,tx2,tx3,tx4,tx5};
     
     generate_merkle_root(txs, 6, hash);
     
