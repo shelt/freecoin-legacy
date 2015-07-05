@@ -12,7 +12,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 
 ### Source guidelines
 * Variables/parameters that refer to the count of an array should use size_t. Bytesizes should not. If you're smarter than me and you think they should, please let me know. NOTE: Block/transaction headers are fixed-size and as such are exempt from this.
-* Memory allocation (i.e., blocks) for a function's output is always done via implementation. Pointers to the pre-allocated memory block are passed into the function.
+* Memory allocation (i.e., blocks) for a function's output is always done via implementation. Pointers to the pre-allocated memory block are passed into the function (typically as the last parameter).
 
 
 ### To-Do
