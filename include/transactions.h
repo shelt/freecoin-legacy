@@ -6,10 +6,9 @@
 
 typedef struct
 {
-    unsigned short size;
+    unsigned short version;
     unsigned short in_count;
     unsigned short out_count;
-    unsigned short version;
     unsigned int time;
 } Header_tx;
 

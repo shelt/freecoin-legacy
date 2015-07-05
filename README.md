@@ -30,6 +30,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 * Replace arrays of pointers with appropriate name (..._ptrs)
 * Create functions to extract data from transactions
 * Better documentation
+* How to make different executables from a single makefile
 
 
 

@@ -7,20 +7,19 @@
 
 
 /*  ******************* TRANSACTION *******************
+    Total size: 10B+(160*input_count)+(132*output_count)
 
-         HEADER 8B          INPUTS 160B    OUTPUTS 132B
-    |------------------|  |------------|  |------------|
-    00 00 00 00 00000000  [32B][128B]...  [128B][4B]...
-    |  |  |  |  |         |    |          |     |
-    |  |  |  |  time      |    signature  |     amount
-    |  |  |  |            |               |
-    |  |  |  version      input_tx        out_address
-    |  |  |
-    |  |  output_count
-    |  |
-    |  input_count
-    |  
-    0x00          
+          HEADER 10B          INPUTS 160B     OUTPUTS 132B
+    |---------------------|  |------------|  |------------|
+    0000 0000 0000 00000000  [32B][128B]...  [128B][4B]...
+    |    |    |    |         |    |          |     |
+    |    |    |    time      |    signature  |     amount
+    |    |    |              |               |
+    |    |    output_count   input_tx        out_address
+    |    |
+    |    input_count
+    |
+    freecoin_version
 
 */
 void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, size_t in_count, size_t out_count, unchar* tx)
@@ -30,17 +29,20 @@ void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, size_t
     unint outs_size = out_count * TX_OUTPUT_BYTESIZE; // Size of outs combined
     unint size = TX_HEADER_SIZE + ins_size + outs_size; // Size of transaction
     
-    tx[0] = 0x00;
-    tx[1] = header->in_count;
-    tx[2] = header->out_count;
-    tx[3] = header->version;
+    tx[0] = (header->version >> 8) & 0xFF;
+    tx[1] =  header->version & 0xFF;
+    tx[2] = (header->in_count >> 8) & 0xFF;
+    tx[3] =  header->in_count & 0xFF;
+    tx[4] = (header->out_count >> 8) & 0xFF;
+    tx[5] =  header->out_count & 0xFF;
     
-    tx[4] = (header->time >> 24) & 0xFF;
-    tx[5] = (header->time >> 16) & 0xFF;
-    tx[6] = (header->time >> 8) & 0xFF;
-    tx[7] = header->time & 0xFF;
     
-    int tx_index = 8;
+    tx[6] = (header->time >> 24) & 0xFF;
+    tx[7] = (header->time >> 16) & 0xFF;
+    tx[8] = (header->time >> 8) & 0xFF;
+    tx[9] =  header->time & 0xFF;
+    
+    int tx_index = 10;
     int i; // Pointer index for this loop
     for(i=0; i<in_count; i++)
     {
@@ -57,7 +59,9 @@ void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, size_t
 
 size_t get_tx_size(unchar *tx)
 {
-    return ((tx[1] * TX_INPUT_BYTESIZE) + (tx[2] * TX_OUTPUT_BYTESIZE) + TX_HEADER_SIZE);
+    
+    return ((tx[2] << 8) | tx[3]) * TX_INPUT_BYTESIZE  + 
+           ((tx[4] << 8) | tx[5]) * TX_OUTPUT_BYTESIZE + TX_HEADER_SIZE;
 }
 
 

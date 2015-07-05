@@ -72,8 +72,13 @@ int main()
     
     generate_merkle_root(txs, 6, hash);
     
-    printf("Merkle root: ");
     int i;
+    for(i=0;i<size;i++)
+        printf("%02x",tx0[i]);
+    printf("\n");
+    
+    printf("Merkle root: ");
+    //int i;
     for(i=0; i<SHA256_SIZE; i++)
         printf("%02x", hash[i]);
     return 0;
