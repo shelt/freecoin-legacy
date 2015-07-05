@@ -4,11 +4,11 @@
 
 ### What is a cryptocurrency?
 
-A cryptocurrency is a currency that is functionally possible because of cryptography. Mathematics and cryptographic principles allow a user is able to prove they were the recipient of a past transaction.
+A cryptocurrency is a currency that is functionally possible because of cryptography. Mathematics and cryptographic principles allow a user to prove they were the recipient of a past transaction.
 
 ### What does it mean to be "decentralized"?
 
-With banks that deal with regular currencies, all regulation happens in one place. Storing the amount of money each person has and the processing of transactions all happens on a few servers. Though they probably take backup and security very seriously, banks (and the governments that regulate them) represent a central authority over a vastly powerful resource. With decentralized currencies, transactions are processed and balances are stored by the people. Everyone agrees on how things should work, so it works. 
+With banks that deal with regular currencies, all regulation happens in one place. Storing the amount of money each person has along with the processing of transactions all happens on a few servers. Though they probably take backups and security very seriously, banks (and the governments that regulate them) represent a central authority over a vastly powerful resource. With decentralized currencies, transactions are processed and balances are stored by the people. Everyone agrees on how things should work, so it works.
 
 ### Source guidelines
 * Variables/parameters that refer to the count of an array should use size_t. Bytesizes should not. If you're smarter than me and you think they should, please let me know. NOTE: Block/transaction headers are fixed-size and as such are exempt from this.
