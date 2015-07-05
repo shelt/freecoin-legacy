@@ -29,11 +29,10 @@ void hexstr_to_bytes(unchar* string, size_t bytes, unchar* bytearr)
 int main()
 {
     //TRANSACTION GENERATION TESTING ////////////////////////////////////////////////////////////
-    Header_tx* header = malloc(sizeof(Header_tx*));
-    header->in_count = 1;
-    header->out_count = 1;
-    header->version = 1;
-    header->time = 1435969063;
+    unshort version = 1;
+    unshort in_count = 1;
+    unshort out_count = 1;
+    unint time = 1435969063;
     
     // the following few things could be done in a loop in implementation for all the ins and outs
     // Initialize xput pointer arrays
@@ -50,7 +49,7 @@ int main()
     
 
     unchar* tx0 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
-    generate_transaction(header, ins, outs, 1, 1, tx0);
+    generate_transaction(version, in_count, out_count, time, ins, outs, 1, 1, tx0);
     
     // MERKLE ROOT TESTING ///////////////////////////////////////////////////////////////////////
     size_t size = (TX_HEADER_SIZE + TX_INPUT_BYTESIZE + TX_OUTPUT_BYTESIZE); // This is only computable like this because we know there's only 1 in and 1 out.
@@ -72,6 +71,7 @@ int main()
     
     generate_merkle_root(txs, 6, hash);
     
+    printf("Transaction:            ");
     int i;
     for(i=0;i<size;i++)
         printf("%02x",tx0[i]);

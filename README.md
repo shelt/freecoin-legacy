@@ -11,14 +11,14 @@ A cryptocurrency is a currency that is functionally possible because of cryptogr
 With banks that deal with regular currencies, all regulation happens in one place. Storing the amount of money each person has and the processing of transactions all happens on a few servers. Though they probably take backup and security very seriously, banks (and the governments that regulate them) represent a central authority over a vastly powerful resource. With decentralized currencies, transactions are processed and balances are stored by the people. Everyone agrees on how things should work, so it works. 
 
 ### Source guidelines
-* Variables/parameters that refer to the count of an array should use size_t. Bytesizes should not. If you're smarter than me and you think they should, please let me know.
+* Variables/parameters that refer to the count of an array should use size_t. Bytesizes should not. If you're smarter than me and you think they should, please let me know. NOTE: Block/transaction headers are fixed-size and as such are exempt from this.
 * Memory allocation (i.e., blocks) for a function's output is always done via implementation. Pointers to the pre-allocated memory block are passed into the function.
 
 
 ### To-Do
 * Blocks
 * What is the input signature a signature of?
-* Functions to build inputs and outputs
+* Functions to build inputs and outputs (as structs)
 * Input and output counts should be larger than 1 byte. more than 255 should be allowed
 * Need to store the tx hash in the block header.
 * Move all pointer astrixes to prefix form

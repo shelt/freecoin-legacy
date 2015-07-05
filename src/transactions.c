@@ -22,26 +22,30 @@
     freecoin_version
 
 */
-void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, size_t in_count, size_t out_count, unchar* tx)
+void generate_transaction(unshort version, unshort in_count, unshort out_count, unint time, // Header variables
+                            unchar** ins, unchar** outs, unchar* tx)
 {
-    // These are computed here for use in for-loop end cases. TODO NONE OF THESE ARE USED !!!?!?!!?
-    unint ins_size = in_count * TX_INPUT_BYTESIZE;    // Side of ins combined
-    unint outs_size = out_count * TX_OUTPUT_BYTESIZE; // Size of outs combined
-    unint size = TX_HEADER_SIZE + ins_size + outs_size; // Size of transaction
+    // These are computed here for use in for-loop tests. TODO
+    //unint ins_size = in_count * TX_INPUT_BYTESIZE;    // Side of ins combined
+    //unint outs_size = out_count * TX_OUTPUT_BYTESIZE; // Size of outs combined
+    //unint size = TX_HEADER_SIZE + ins_size + outs_size; // Size of transaction
     
-    tx[0] = (header->version >> 8) & 0xFF;
-    tx[1] =  header->version & 0xFF;
-    tx[2] = (header->in_count >> 8) & 0xFF;
-    tx[3] =  header->in_count & 0xFF;
-    tx[4] = (header->out_count >> 8) & 0xFF;
-    tx[5] =  header->out_count & 0xFF;
+    ///////////////////// START HEADER /////////////////////
+    
+    tx[0] = (version >> 8)  & 0xFF;
+    tx[1] =  version        & 0xFF;
+    tx[2] = (in_count >> 8) & 0xFF;
+    tx[3] =  in_count       & 0xFF;
+    tx[4] = (out_count >> 8)& 0xFF;
+    tx[5] =  out_count      & 0xFF;
     
     
-    tx[6] = (header->time >> 24) & 0xFF;
-    tx[7] = (header->time >> 16) & 0xFF;
-    tx[8] = (header->time >> 8) & 0xFF;
-    tx[9] =  header->time & 0xFF;
+    tx[6] = (time >> 24) & 0xFF;
+    tx[7] = (time >> 16) & 0xFF;
+    tx[8] = (time >> 8) & 0xFF;
+    tx[9] =  time & 0xFF;
     
+    ////////////////////// END HEADER //////////////////////
     int tx_index = 10;
     int i; // Pointer index for this loop
     for(i=0; i<in_count; i++)

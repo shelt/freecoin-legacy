@@ -4,16 +4,8 @@
 #include <stdlib.h>
 #include "shared.h"
 
-typedef struct
-{
-    unsigned short version;
-    unsigned short in_count;
-    unsigned short out_count;
-    unsigned int time;
-} Header_tx;
-
-void generate_transaction(Header_tx* header, unchar** ins, unchar** outs, size_t in_count, size_t out_count, unchar* tx);
-
+void generate_transaction(unshort version, unshort in_count, unshort out_count, unint time, // Header variables
+                            unchar** ins, unchar** outs, unchar* tx);                       // Body variables
 void generate_merkle_root(unchar** txs, size_t tx_count, unchar* hash);
 
 #endif
