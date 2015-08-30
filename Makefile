@@ -1,34 +1,32 @@
-#   $< means first prereq
-#   $@ is file being generated
-
-CC=gcc
-CFLAGS=-I$(I_DIR)
-
+default: freecoin
 I_DIR = include
 L_DIR = lib
 O_DIR = build
 B_DIR = bin
 S_DIR = src
 
+CC=gcc
+CFLAGS=-I$(I_DIR)
 
+# Generate object files list
+sfiles  = $(wildcard $(S_DIR)/*.c)
+_ofiles = $(sfiles:.c=.o)                          # change %.c to %.o
+ofiles  = $(patsubst $(S_DIR)/%,$(O_DIR)/%,$(_ofiles))
 
-_HEADERS = shared.h crypto.h transactions.h 
-_OBJECTS = crypto.o transactions.o testing.o 
-default: testing
+# Generate header files list
+hfiles  = $(wildcard $(I_DIR)/*.h)
 
+#-include $(hfiles)
 
-
-# add paths
-HEADERS = $(patsubst %,$(I_DIR)/%,$(_HEADERS))
-OBJECTS = $(patsubst %,$(O_DIR)/%,$(_OBJECTS))
-
-# generate object files
-$(O_DIR)/%.o: $(S_DIR)/%.c $(HEADERS)
+# Generate object file
+$(O_DIR)/%.o: $(S_DIR)/%.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-testing: $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(B_DIR)/$@ $(CFLAGS)
+freecoin: $(ofiles)
+	$(CC) $^ -o $(B_DIR)/$@ $(CFLAGS)
+
+.PHONY: clean
 
 clean:
-	-rm -f $(OBJECTS)
-	-rm -f $(B_DIR)/*.exe
+	-rm -f $(O_DIR)/*
+	-rm -f $(B_DIR)/*
