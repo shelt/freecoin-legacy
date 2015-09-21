@@ -1,29 +1,32 @@
-default: freecoin
 I_DIR = include
 L_DIR = lib
 O_DIR = build
 B_DIR = bin
 S_DIR = src
 
+BIN_PREFIX=freecoin-
 CC=gcc
 CFLAGS=-I$(I_DIR)
 
-# Generate object files list
-sfiles  = $(wildcard $(S_DIR)/*.c)
-_ofiles = $(sfiles:.c=.o)                          # change %.c to %.o
-ofiles  = $(patsubst $(S_DIR)/%,$(O_DIR)/%,$(_ofiles))
 
-# Generate header files list
-hfiles  = $(wildcard $(I_DIR)/*.h)
+default: all
+all: clean mine testing
 
-#-include $(hfiles)
+
+
+TARGETS = mine testing
+
+.SECONDEXPANSION:
+mine_PREREQS = mine.o crypto.o transactions.o
+testing_PREREQS = testing.o crypto.o transactions.o
 
 # Generate object file
 $(O_DIR)/%.o: $(S_DIR)/%.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-freecoin: $(ofiles)
-	$(CC) $^ -o $(B_DIR)/$@ $(CFLAGS)
+$(TARGETS): $$(addprefix $(O_DIR)/, $$($$@_PREREQS)) 
+	$(CC) $^ -o $(B_DIR)/$(BIN_PREIFX)$@ $(CFLAGS)
+
 
 .PHONY: clean
 
