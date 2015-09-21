@@ -26,14 +26,13 @@ void hexstr_to_bytes(unchar *string, size_t bytes, unchar *bytearr)
 }
 
 // At the moment, test values are arbitrary and are not real hashes of previous txs or blocks
-int main()
+int main(void)
 {
     //TRANSACTION GENERATION TESTING ////////////////////////////////////////////////////////////
     unshort version = 1;
     size_t in_count = 1;
     size_t out_count = 1;
     unint time = 1435969063;
-    
     
     // the following few things could be done in a loop in implementation for all the ins and outs
     unchar *ins[1];
