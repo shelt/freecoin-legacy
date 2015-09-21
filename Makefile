@@ -29,8 +29,8 @@ $(O_DIR)/%.o: $(S_DIR)/%.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 # Main target
-$(TARGETS): $$(addprefix $(O_DIR)/, $$($$@_PREREQS)) 
-	$(CC) $^ -o $(B_DIR)/$(BIN_PREIFX)$@ $(CFLAGS)
+$(TARGETS): $$(addprefix $(O_DIR)/, $$($$@_PREREQS))
+	$(CC) $^ -o $(B_DIR)/$(BIN_PREFIX)$@ $(CFLAGS)
 
 
 .PHONY: clean
