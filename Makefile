@@ -6,7 +6,7 @@ S_DIR = src
 
 BIN_PREFIX=freecoin-
 CC=gcc
-CFLAGS=-I$(I_DIR)
+CFLAGS=-Wall -std=c99 -I$(I_DIR)
 
 
 default: all
