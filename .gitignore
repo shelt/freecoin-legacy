@@ -3,5 +3,6 @@
 *.dll
 *.exe
 *.stackdump
-*.swp
+*.sw[ponm]
+*.save
 *~
