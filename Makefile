@@ -19,8 +19,8 @@ all: clean init mine testing
 TARGETS = mine testing
 
 # Prerequisites for build targets
-mine_PREREQS = mine.o crypto.o transactions.o
-testing_PREREQS = testing.o crypto.o transactions.o
+mine_PREREQS = mine.o crypto.o transactions.o printing.o
+testing_PREREQS = testing.o crypto.o transactions.o printing.o
 
 
 
