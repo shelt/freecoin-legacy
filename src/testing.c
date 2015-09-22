@@ -18,7 +18,7 @@ unsigned char hexc_to_int(char c)
     else return 255;
 }
 
-void hexstr_to_bytes(unchar *string, size_t bytes, unchar *bytearr)
+void hexstr_to_bytes(char *string, size_t bytes, unchar *bytearr)
 {
     int byte_pos, str_pos;
     for(byte_pos=0, str_pos=0;   byte_pos<bytes;   byte_pos++ ,str_pos+=2)
