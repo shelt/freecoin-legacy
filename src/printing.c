@@ -1,5 +1,6 @@
-#include "shared.h"
 #include <stdio.h>
+#include "shared.h"
+
 
 void print_version()
 {

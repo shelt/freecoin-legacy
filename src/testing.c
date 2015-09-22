@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#define unchar unsigned char
-#define unint unsigned int
-
 unsigned char hexc_to_int(char c)
 {
     if(c >= '0' && c <= '9')

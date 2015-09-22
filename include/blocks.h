@@ -1,9 +1,6 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 
-#include <stdlib.h>
-#include "shared.h"
-
 /*
     **Transactions** are generated in an instant. Data is given and a block of data [header+body]
     is received as output. This is done using generate_transaction().

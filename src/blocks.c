@@ -1,4 +1,5 @@
-
+#include <stdlib.h>
+#include "shared.h"
 
 /*  ********************** BLOCK **********************
     Total size: 10B+(160*input_count)+(132*output_count)

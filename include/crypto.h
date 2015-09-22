@@ -1,5 +1,3 @@
-#include "shared.h"
-
 #ifndef CRYPTO_H
 #define CRYPTO_H
 
