@@ -35,7 +35,7 @@ $(TARGETS): $$(addprefix $(O_DIR)/, $$($$@_PREREQS))
 
 .PHONY: clean
 init:
-	-mkdir $(O_DIR) $(B_DIR)
+	-mkdir -p $(O_DIR) $(B_DIR)
 clean:
 	-rm -f $(O_DIR)/*
 	-rm -f $(B_DIR)/*
