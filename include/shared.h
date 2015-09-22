@@ -1,8 +1,8 @@
 #ifndef SHARED_H
-
 #define SHARED_H
 
-#define __VERSION "0.1a"
+// short (2B)
+#define __VERSION 1
 
 #define unchar unsigned char
 #define unint unsigned int
@@ -21,3 +21,6 @@
 #define RSA1024_SIZE 128
 
 #endif
+
+
+

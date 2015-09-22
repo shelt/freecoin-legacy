@@ -29,7 +29,7 @@ void hexstr_to_bytes(char *string, size_t bytes, unchar *bytearr)
 int main(void)
 {
     //TRANSACTION GENERATION TESTING ////////////////////////////////////////////////////////////
-    unshort version = 1;
+    unshort version = __VERSION;
     size_t in_count = 1;
     size_t out_count = 1;
     unint time = 1435969063;
