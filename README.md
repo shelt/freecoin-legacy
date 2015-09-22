@@ -1,6 +1,6 @@
 # freecoin
 
-**freecoin** is a cryptocurrency in early development.
+**freecoin** is a fully-functional cryptocurrency I'm making for fun.
 
 ### What is a cryptocurrency?
 
@@ -15,10 +15,3 @@ With banks that deal with regular currencies, all regulation happens in one plac
 * Memory allocation (i.e., blocks) for a function's output is always done via implementation. Pointers to the pre-allocated memory block are passed into the function (typically as the last parameter).
 * Only include things in the header file when the header file itself needs them.
 
-
-### To-Do
-* Blocks
-* Protocol
-* What is the input signature a signature of?
-* Need to store the tx hash in the block header.
-* Better documentation
