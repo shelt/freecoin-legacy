@@ -19,3 +19,4 @@ With banks that deal with regular currencies, all regulation happens in one plac
 * The block header is 78 bytes, and the only dynamic component (the nonce) is the last 4. The first 64B chunk of every hash need not be calculated on each iteration.
 * Should serial generation functions which take many arguments instead use structs?
 * Document protocol in one place.
+* Move tx-specific defines to tx header
