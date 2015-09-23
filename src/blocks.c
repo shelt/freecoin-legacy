@@ -31,5 +31,6 @@ void generate_block(unshort version, unint time, unchar *prev_block_hash,
                     unchar **txs, unshort tx_count)
 {
     unchar *block = malloc(MAX_BLOCKSIZE);
-    //TODO
+    //TODO header
+    //TODO current cursor for writing body
 };
