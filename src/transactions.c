@@ -14,7 +14,7 @@
     |---------------------|  |------------|  |------------|
     0000 0000 0000 00000000  [32B][128B]...  [128B][4B]...
     |    |    |    |         |    |          |     |
-    |    |    |    time      |    signature  |     amount
+    |    |    |    lock_time |    signature  |     amount
     |    |    |              |               |
     |    |    output_count   ref_tx          out_address
     |    |
@@ -23,7 +23,15 @@
     freecoin_version
 
 */
-void generate_transaction(unshort version, unshort in_count, unshort out_count, unint time, // Header variables
+
+/* 
+    Creates a serialized transaction beginning at pointer tx
+    (which is already allocated). The allocated space could be
+    exactly the size of the transaction (for use in transmitting
+    mempool transactions); or an index within allocated memory
+    (for transactions within blocks).
+*/
+void generate_transaction(unshort version, unshort in_count, unshort out_count, unint lock_time, // Header variables
                             unchar **ins, unchar **outs, unchar *tx)
 {
     // These are computed here for use in for-loop tests. TODO
@@ -40,11 +48,10 @@ void generate_transaction(unshort version, unshort in_count, unshort out_count, 
     tx[4] = (out_count >> 8)& 0xFF;
     tx[5] =  out_count      & 0xFF;
     
-    
-    tx[6] = (time >> 24) & 0xFF;
-    tx[7] = (time >> 16) & 0xFF;
-    tx[8] = (time >> 8) & 0xFF;
-    tx[9] =  time & 0xFF;
+    tx[6] = (lock_time >> 24) & 0xFF;
+    tx[7] = (lock_time >> 16) & 0xFF;
+    tx[8] = (lock_time >> 8) & 0xFF;
+    tx[9] =  lock_time & 0xFF;
     
     ////////////////////// END HEADER //////////////////////
     int tx_index = 10;
