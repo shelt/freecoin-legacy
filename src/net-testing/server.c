@@ -46,13 +46,13 @@ void handle(unsigned short quickAck, int clntSock)
 
 int main(int argc, char *argv[])
 {
-    int servSock;                    /* Socket descriptor for server */
-    int clntSock;                    /* Socket descriptor for client */
-    struct sockaddr_in echoServAddr; /* Local address */
-    struct sockaddr_in echoClntAddr; /* Client address */
-    unsigned short echoServPort;     /* Server port */
+    int servSock;                  // Socket descriptor for server
+    int clntSock;                  // Socket descriptor for client
+    struct sockaddr_in servAddr;   // Local address
+    struct sockaddr_in clientAddr; // Client address
+    unsigned short servPort;       // Server port
     unsigned short quickAck;
-    unsigned int clntLen;            /* Length of client address data structure */
+    unsigned int clntLen;          // Length of client address data structure
     int value = 1;
 
 
@@ -62,46 +62,45 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    echoServPort = atoi(argv[1]);  /* First arg:  local port */
-    quickAck = atoi(argv[2]);      /* Whether quick ack is enabled or not */
+    servPort = atoi(argv[1]);  // Local port
+    quickAck = atoi(argv[2]);  // Whether quick ack is enabled or not
 
-    /* Create socket for incoming connections */
+    // Create socket for incoming connections
     if ((servSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
         die("socket() failed");
 
-    /* Construct local address structure */
-    memset(&echoServAddr, 0, sizeof(echoServAddr));   /* Zero out structure */
-    echoServAddr.sin_family = AF_INET;                /* Internet address family */
-    echoServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
-    echoServAddr.sin_port = htons(echoServPort);      /* Local port */
+    // Construct local address structure
+    memset(&servAddr, 0, sizeof(servAddr));       // Zero out structure
+    servAddr.sin_family = AF_INET;                // Internet address family
+    servAddr.sin_addr.s_addr = htonl(INADDR_ANY); // Any incoming interface
+    servAddr.sin_port = htons(servPort);          // Local port
 
-    /* Bind to the local address */
-    if (bind(servSock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
+    // Bind to the local address
+    if (bind(servSock, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
         die("bind() failed");
 
-    /* Mark the socket so it will listen for incoming connections */
+    // Mark the socket so it will listen for incoming connections
     if (listen(servSock, MAXPENDING) < 0)
         die("listen() failed");
 
     for (;;) /* Run forever */
     {
         /* Set the size of the in-out parameter */
-        clntLen = sizeof(echoClntAddr);
+        clntLen = sizeof(clientAddr);
 
         printf("Waiting for client...\n");
 
         /* Wait for a client to connect */
-        if ((clntSock = accept(servSock, (struct sockaddr *) &echoClntAddr, &clntLen)) < 0)
+        if ((clntSock = accept(servSock, (struct sockaddr *) &clientAddr, &clntLen)) < 0)
             die("accept() failed");
 
         /* clntSock is connected to a client! */
 
-        printf("Handling client %s\n", inet_ntoa(echoClntAddr.sin_addr));
+        printf("Handling client %s\n", inet_ntoa(clientAddr.sin_addr));
 
         if (setsockopt(clntSock, IPPROTO_TCP, TCP_NODELAY, (char *)&value, sizeof(int)) < 0)
             die("TCP_NODELAY failed");
 
         handle(quickAck, clntSock);
     }
-    /* NOT REACHED */
 }

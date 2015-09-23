@@ -1,0 +1,89 @@
+MSG CONTENTS
+inv       : some list of blocks or transactions you have (contents depends on reason for sending)
+version   : version,time
+verack    : version is accepted
+getblocks : *
+getdata   : *
+block     : *
+addr      : active (<3 hrs ago) IPs and respective timestamps of last activity
+reject    : *
+mempool   : *
+alert     : *
+ping      : *
+pong      : *
+tx        : *
+block
+* see docs for all blank
+* limit to 8 peers
+* <x> means a message of type x
+* Non-advertised nodes should be forgotten after typically 3 hours
+* use payload maxes in docs and insure such maxes before allocation (1MB for blocks)
+
+### GENERAL ###
+
+Become a peer client-wise:
+- Send server a <version>
+- Recieve a <verack> from server if your <version> matched theirs.
+- Recieve a <version> from server
+- Send server an <addr>. DONE EVERY 24 HOURS TO ALL PEERS
+- Send <getblocks> containing your latest block
+
+Become a peer server-wise:
+- Recieve a <version> from a client
+- Send client a <verack> if your version matches
+- Send client a <version>
+- Send client an <addr>. DONE EVERY 24 HOURS TO ALL PEERS
+
+Recieving <addr>:
+- store addresses you don't have already that are younger than 3 hours.
+
+Recieving <getaddr>:
+- Send client active peers from your addresslist
+
+Submit transaction(s):
+- Send all peers an <inv> containing transaction hash(es)
+- Recieve <getdata> for the transactions only you have (the new ones)
+- Send <tx>s for all new transactions to all peers who requested.
+
+Recieving an <inv>:
+- If you don't have a transaction or block listed in the <inv>, do <getdata> on all missing data.
+- Verify the data
+- If it's valid, store the data where it belongs (mempool if tx or blockchain if block)
+- If it isn't valid, send <reject>
+
+Recieving a <mempool>
+- Send an <inv> of your mempool
+
+
+Recieving a <tx> (which only happens after a request for it):
+- Verify integrity (if invalid, send <reject>)
+- If you're working on a block and it contains transaction(s), add it to your local mempool
+- Send it in an <inv> to peers
+
+Recieving a <block> (which only happens after a request for it):
+- Verify integrity (if invalid, send <reject>)
+- Add it to your blockchain
+- Send it in an <inv> to peers
+
+Recieving a <getdata>:
+- Send the requested data.
+
+Recieving a <mempool>:
+- Send your mempool in <inv>
+
+
+### MINING ###
+
+Work on a block:
+- Attempt to find a valid block nonce whilst:
+----- Recieve <tx>s from peers
+----- 
+----- 
+----- 
+
+Submit a block:
+
+
+
+Recieving a <getblocks>:
+- If your blockchain is ahead of client's, send <inv> containing up to 500 blocks they are missing.
