@@ -22,8 +22,7 @@ void hexstr_to_bytes(char *string, size_t bytes, unchar *bytearr)
         bytearr[byte_pos] = (hexc_to_int(string[str_pos]) << 4) | (hexc_to_int(string[str_pos+1]));
 }
 
-// At the moment, test values are arbitrary and are not real hashes of previous txs or blocks
-int main(void)
+void transaction_test()
 {
     //TRANSACTION GENERATION TESTING ////////////////////////////////////////////////////////////
     unshort version = __VERSION;
@@ -36,8 +35,8 @@ int main(void)
     unchar *outs[1];
     
     
-    ins[0] = malloc(TX_INPUT_BYTESIZE);
-    outs[0] = malloc(TX_OUTPUT_BYTESIZE);
+    ins[0] = malloc(TX_IN_SIZE);
+    outs[0] = malloc(TX_OUT_SIZE);
     
     ///// INPUT GENERATING /////
     unchar *ref_tx = malloc(SHA256_SIZE);
@@ -47,7 +46,7 @@ int main(void)
     hexstr_to_bytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", RSA1024_SIZE, sig);
     
     
-    generate_tx_input(ref_tx, sig, ins[0]);
+    gen_tx_input(ref_tx, sig, ins[0]);
     
 
     
@@ -55,21 +54,21 @@ int main(void)
     unchar *out_address = malloc(RSA1024_SIZE);
     hexstr_to_bytes("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", RSA1024_SIZE, out_address);
     unint amount = 0x00000001;
-    generate_tx_output(out_address, amount, outs[0]);
+    gen_tx_output(out_address, amount, outs[0]);
     
-    unchar *tx0 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
-    generate_transaction(version, in_count, out_count, time, ins, outs, tx0);
+    unchar *tx0 = malloc(TX_HEADER_SIZE + 1*TX_IN_SIZE + 1*TX_OUT_SIZE);
+    gen_tx(version, in_count, out_count, time, ins, outs, tx0);
 
     
     // MERKLE ROOT TESTING ///////////////////////////////////////////////////////////////////////
-    size_t size = (TX_HEADER_SIZE + TX_INPUT_BYTESIZE + TX_OUTPUT_BYTESIZE); // This is only computable like this because we know there's only 1 in and 1 out.
+    size_t size = (TX_HEADER_SIZE + TX_IN_SIZE + TX_OUT_SIZE); // This is only computable like this because we know there's only 1 in and 1 out.
     unchar* hash = malloc(SHA256_SIZE);
     
-    unchar *tx1 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
-    unchar *tx2 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
-    unchar *tx3 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
-    unchar *tx4 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
-    unchar *tx5 = malloc(TX_HEADER_SIZE + 1*TX_INPUT_BYTESIZE + 1*TX_OUTPUT_BYTESIZE);
+    unchar *tx1 = malloc(TX_HEADER_SIZE + 1*TX_IN_SIZE + 1*TX_OUT_SIZE);
+    unchar *tx2 = malloc(TX_HEADER_SIZE + 1*TX_IN_SIZE + 1*TX_OUT_SIZE);
+    unchar *tx3 = malloc(TX_HEADER_SIZE + 1*TX_IN_SIZE + 1*TX_OUT_SIZE);
+    unchar *tx4 = malloc(TX_HEADER_SIZE + 1*TX_IN_SIZE + 1*TX_OUT_SIZE);
+    unchar *tx5 = malloc(TX_HEADER_SIZE + 1*TX_IN_SIZE + 1*TX_OUT_SIZE);
     
     tx1=memcpy(tx1, tx0, size);
     tx2=memcpy(tx2, tx1, size);
@@ -79,7 +78,7 @@ int main(void)
 
     unchar *txs[6] = {tx0,tx1,tx2,tx3,tx4,tx5};
     
-    generate_merkle_root(txs, 6, hash);
+    gen_merkle_root(txs, 6, hash);
     
     printf("Transaction:            ");
     int i;
@@ -91,5 +90,21 @@ int main(void)
     //int i;
     for(i=0; i<SHA256_SIZE; i++)
         printf("%02x", hash[i]);
+};
+
+void midstate_test()
+{
+    unchar *block = malloc(256);
+    for(int i=0; i<256; i++)
+        printf("%02x", block[i]);
+    printf("\n\n\n\n");
+    for(int i=0; i<256; i++)
+        printf("%02x", block[i]);
+};
+// At the moment, test values are arbitrary and are not real hashes of previous txs or blocks
+int main(void)
+{
+    midstate_test();
+    
     return 0;
 };

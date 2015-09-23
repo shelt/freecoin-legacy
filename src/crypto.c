@@ -95,11 +95,16 @@ void sha256_update(SHA256_CTX *ctx, unchar data[], size_t len)
       if (ctx->datalen == 64)
       { 
          sha256_transform(ctx,ctx->data);
-         DBL_INT_ADD(ctx->bitlen[0],ctx->bitlen[1],512); 
-         ctx->datalen = 0; 
+         DBL_INT_ADD(ctx->bitlen[0],ctx->bitlen[1],512);
+         ctx->datalen = 0;
       }  
    }  
-}  
+}
+// Access the current state of the transformation TODO
+void sha256_state(SHA256_CTX *ctx, unchar state[])
+{
+    //TODO
+};
 
 void sha256_final(SHA256_CTX *ctx, unchar hash[])
 {  

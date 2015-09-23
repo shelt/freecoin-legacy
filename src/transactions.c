@@ -15,11 +15,11 @@
     |    |    |    |         |    |          |     |
     |    |    |    lock_time |    signature  |     amount
     |    |    |              |               |
-    |    |    output_count   ref_tx          out_address
+    |    |    out_count   ref_tx          out_address
     |    |
-    |    input_count
+    |    in_count
     |
-    freecoin_version
+    version
 
 */
 
@@ -30,16 +30,16 @@
     mempool transactions); or an index within allocated memory
     (for transactions within blocks).
 */
-void generate_transaction(unshort version, unshort in_count, unshort out_count, unint lock_time, // Header variables
-                            unchar **ins, unchar **outs, unchar *tx)
+void gen_tx(unshort in_count, unshort out_count, unint lock_time, // Header variables
+            unchar **ins, unchar **outs, unchar *tx)
 {
     // These are computed here for use in for-loop tests. TODO
-    //unint ins_size = in_count * TX_INPUT_BYTESIZE;    // Side of ins combined
-    //unint outs_size = out_count * TX_OUTPUT_BYTESIZE; // Size of outs combined
+    //unint ins_size = in_count * TX_IN_SIZE;    // Side of ins combined
+    //unint outs_size = out_count * TX_OUT_SIZE; // Size of outs combined
     //unint size = TX_HEADER_SIZE + ins_size + outs_size; // Size of transaction
     
     ///////////////////// START HEADER /////////////////////
-    
+    unshort version = __VERSION;
     tx[0] = (version >> 8)  & 0xFF;
     tx[1] =  version        & 0xFF;
     tx[2] = (in_count >> 8) & 0xFF;
@@ -49,31 +49,31 @@ void generate_transaction(unshort version, unshort in_count, unshort out_count, 
     
     tx[6] = (lock_time >> 24) & 0xFF;
     tx[7] = (lock_time >> 16) & 0xFF;
-    tx[8] = (lock_time >> 8) & 0xFF;
-    tx[9] =  lock_time & 0xFF;
+    tx[8] = (lock_time >> 8)  & 0xFF;
+    tx[9] =  lock_time        & 0xFF;
     
     ////////////////////// END HEADER //////////////////////
     int tx_index = 10;
     int i; // Pointer index for this loop
     for(i=0; i<in_count; i++)
     {
-         memcpy(&tx[tx_index], ins[i], TX_INPUT_BYTESIZE);
-         tx_index += TX_INPUT_BYTESIZE;
+         memcpy(&tx[tx_index], ins[i], TX_IN_SIZE);
+         tx_index += TX_IN_SIZE;
     }
 
     for(i=0; i<out_count; i++)
     {
-        memcpy(&tx[tx_index], outs[i], TX_OUTPUT_BYTESIZE);
-        tx_index += TX_OUTPUT_BYTESIZE;
+        memcpy(&tx[tx_index], outs[i], TX_OUT_SIZE);
+        tx_index += TX_OUT_SIZE;
     }
 }
 
-void generate_tx_input(unchar *ref_tx, unchar *sig, unchar *tx_input)
+void gen_tx_input(unchar *ref_tx, unchar *sig, unchar *tx_input)
 {
     memcpy(&tx_input[0], ref_tx, SHA256_SIZE);
     memcpy(&tx_input[SHA256_SIZE], sig, RSA1024_SIZE);
 }
-void generate_tx_output(unchar *out_address, unint amount, unchar *tx_output)
+void gen_tx_output(unchar *out_address, unint amount, unchar *tx_output)
 {
     memcpy(&tx_output[0], out_address, RSA1024_SIZE);
     // Convert int to byte array
@@ -89,8 +89,8 @@ void generate_tx_output(unchar *out_address, unint amount, unchar *tx_output)
 
 unchar get_tx_size(unchar *tx)
 {
-    return ((tx[2] << 8) | tx[3]) * TX_INPUT_BYTESIZE  + 
-           ((tx[4] << 8) | tx[5]) * TX_OUTPUT_BYTESIZE + TX_HEADER_SIZE;
+    return ((tx[2] << 8) | tx[3]) * TX_IN_SIZE  + 
+           ((tx[4] << 8) | tx[5]) * TX_OUT_SIZE + TX_HEADER_SIZE;
 }
 
 
@@ -114,7 +114,7 @@ unchar get_tx_size(unchar *tx)
     If it's an odd number, the final one is hashed with itself.
     Process is repeated until one hash remains (the MERKLE ROOT).
 */
-void generate_merkle_root(unchar **txs, unchar tx_count, unchar *outhash)
+void gen_merkle_root(unchar **txs, unshort tx_count, unchar *outhash)
 {
     unchar *tree_hashes[tx_count];                // An array of pointers to leaves
     unchar *buffer = malloc(SHA256_SIZE);         // The buffer where SHA256s are generated.
