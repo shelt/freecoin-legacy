@@ -6,9 +6,8 @@
 #include "crypto.h"
 #include "transactions.h"
 
-
 /*  ******************* TRANSACTION *******************
-    Total size: 10B+(160*input_count)+(132*output_count)
+    Total size = 10B+(160*input_count)+(132*output_count)
 
           HEADER 10B          INPUTS 160B     OUTPUTS 132B
     |---------------------|  |------------|  |------------|
@@ -88,7 +87,7 @@ void generate_tx_output(unchar *out_address, unint amount, unchar *tx_output)
 }
 
 
-size_t get_tx_size(unchar *tx)
+unchar get_tx_size(unchar *tx)
 {
     return ((tx[2] << 8) | tx[3]) * TX_INPUT_BYTESIZE  + 
            ((tx[4] << 8) | tx[5]) * TX_OUTPUT_BYTESIZE + TX_HEADER_SIZE;
@@ -115,7 +114,7 @@ size_t get_tx_size(unchar *tx)
     If it's an odd number, the final one is hashed with itself.
     Process is repeated until one hash remains (the MERKLE ROOT).
 */
-void generate_merkle_root(unchar **txs, size_t tx_count, unchar *outhash)
+void generate_merkle_root(unchar **txs, unchar tx_count, unchar *outhash)
 {
     unchar *tree_hashes[tx_count];                // An array of pointers to leaves
     unchar *buffer = malloc(SHA256_SIZE);         // The buffer where SHA256s are generated.
