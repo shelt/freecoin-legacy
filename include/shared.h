@@ -3,10 +3,13 @@
 
 // short (2B)
 #define __VERSION 1
+#define MINING_REWARD 100
 
 #define unchar unsigned char
 #define unint unsigned int
 #define unshort unsigned short
+
+#define BLOCK_HEADER_SIZE 80
 
 // 1024*1024
 #define MAX_BLOCKSIZE 1048576

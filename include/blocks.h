@@ -1,9 +1,11 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 
-void generate_block(unshort version, unint time, unchar *prev_block_hash, // Header
-                    unchar *merkle_root, unint target, unint nonce,       // Header
-                    unchar **txs, unshort tx_count);                      // Body
+void init_block(unchar target, unchar *block);
 
-void block_inc_nonce(unchar *block);
+void update_block_nonce(unchar *block, unint nonce);
+
+void update_block_merkle_root(unchar *block, unint tx_count);
+
+void update_block_tx_count(unchar *block, unint tx_count);
 #endif
