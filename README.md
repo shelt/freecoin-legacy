@@ -16,6 +16,18 @@ With banks that deal with regular currencies, all regulation happens in one plac
 * Only include things in the header file when the header file itself needs them.
 
 ### Todo
+#### Roadmap
+* Mempool
+* Networking / mempool
+* recieve <inv> constantly for next mempool once they are in a confirmed block
+* verification - what is signed for txs?
+* functions in freecoin.c
+* get rid of memcpys and use loops for endian-safeness
+* make all functions that copy data to a ptr also return the ptr
+* make all function names include the name of what they do/modify (block, tx)
+* update time every few seconds (avg of peers)
+
+#### Misc
 * The block header is 78 bytes, and the only dynamic component (the nonce) is the last 4. The first 64B chunk of every hash need not be calculated on each iteration.
 * Should serial generation functions which take many arguments instead use structs?
 * Document protocol in one place.
