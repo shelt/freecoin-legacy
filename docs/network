@@ -18,6 +18,7 @@ block
 * <x> means a message of type x
 * Non-advertised nodes should be forgotten after typically 3 hours
 * use payload maxes in docs and insure such maxes before allocation (1MB for blocks)
+* note: force print statements to flush from buffer by using \n (useful when segfaults are occuring)
 
 ### GENERAL ###
 
@@ -48,7 +49,7 @@ Submit transaction(s):
 Recieving an <inv>:
 - If you don't have a transaction or block listed in the <inv>, do <getdata> on all missing data.
 - Verify the data
-- If it's valid, store the data where it belongs (mempool if tx or blockchain if block)
+- If it's valid, store the data where it belongs (mempool if tx or blockchain if block, then interrupt miner)
 - If it isn't valid, send <reject>
 
 Recieving a <mempool>

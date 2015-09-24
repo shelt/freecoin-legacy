@@ -1,6 +1,7 @@
 #include "shared.h"
 #include "util.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 
 unchar hexc_to_int(char c)
@@ -17,4 +18,11 @@ void hexstr_to_bytes(char *string, size_t bytes, unchar *bytearr)
     int byte_pos, str_pos;
     for(byte_pos=0, str_pos=0;   byte_pos<bytes;   byte_pos++ ,str_pos+=2)
         bytearr[byte_pos] = (hexc_to_int(string[str_pos]) << 4) | (hexc_to_int(string[str_pos+1]));
+}
+
+
+void die(char *string)
+{
+    printf("Fatal: %s\n", string);
+    exit(1);
 }

@@ -5,6 +5,7 @@
 #include "shared.h"
 #include "crypto.h"
 #include "transactions.h"
+#include "blockchain.h"
 
 /*  ******************* TRANSACTION *******************
     Total size = 10B+(160*input_count)+(132*output_count)
@@ -72,7 +73,8 @@ void gen_tx_input(unchar *ref_tx, unchar *sig, unchar *tx_input)
 }
 void gen_tx_output(unchar *out_address, unint amount, unchar *tx_output)
 {
-    memcpy(&tx_output[0], out_address, RSA1024_SIZE);
+    if (out_address != NULL)
+        memcpy(&tx_output[0], out_address, RSA1024_SIZE);
     // Convert int to byte array
     int i;
     unchar *amount_bytes = malloc(sizeof(unint));

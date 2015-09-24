@@ -19,7 +19,7 @@ all: clean init mine testing
 TARGETS = mine testing
 
 # Prerequisites for build targets
-mine_PREREQS = mine.o crypto.o transactions.o blocks.o printing.o freecoin.o util.o
+mine_PREREQS = mine.o crypto.o transactions.o blocks.o printing.o util.o blockchain.o network.o
 testing_PREREQS = $(mine_PREREQS)
 
 

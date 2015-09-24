@@ -6,10 +6,11 @@
 #include "shared.h"
 #include "printing.h"
 #include "transactions.h"
-#include "freecoin.h"
 #include "blocks.h"
 #include "util.h"
 #include "crypto.h"
+#include "blockchain.h"
+#include "network.h"
 
 // todo validation.c
 // passing a point in an array as a ptr looks like &array[x]
@@ -25,8 +26,12 @@ int is_valid_blockhash(unchar *hash, unchar target)
     return 1;
 };
 
-void succeed(unchar *block)
+void succeed(unchar *block, unchar *hash)
 {
+    printf("Valid block found!\n");
+    for(int i=0; i<SHA256_SIZE; i++)
+        printf("%02x", hash[i]);
+    printf("\n\n");
     // clear mempool
     // TODO
 };
@@ -77,7 +82,7 @@ void mine(unchar **outs, unshort out_count, unint lock_time, unchar **mempool, u
         if (hash[0] == 0x00) // Has some zero bits
             if (is_valid_blockhash(hash, curr_target))
             {
-                succeed(block);
+                succeed(block, hash);
                 break;
             }
         update_block_nonce(block, nonce++);
@@ -90,27 +95,52 @@ void mine(unchar **outs, unshort out_count, unint lock_time, unchar **mempool, u
 
 int main(int argc, char **argv)
 {
+    
     print_greeting();
-
     if (argc==1)
-        printf("\nType -h for help.\n");
+        die("No flags provided.\nType -h for help.");
     else
     {
-        // Out transactions parsing
-        unchar *outs[1024*1024]; // Arbitrarily large (for now)
-        char out_address_string[RSA1024_SIZE];
-        unchar *out_address_bytes = malloc(RSA1024_SIZE);
-        unint out_count = 0;
-        while(fgets(out_address_string, RSA1024_SIZE, stdin) != NULL)
-        {
+        unchar **outs = malloc(1024*1024);      // Array of tx_outs; Arbitrarily large (for now)
+        unint out_count = 0;                    // Count for tx_outs
+        int param_i = 1;                        // Index of next argv parameter
+        // TODO move this to its own parsing file and turn repetitive ifs into functions
+        while (param_i <= argc)
+        {   printf("DEBUG: %d\n",param_i); // segfault debugging
+            if (argv[param_i][0] == '-')
+                if (argv[param_i][1] == 'o') // Output: -o <addr>
+                {
+                    if (argc >= param_i && argv[param_i+1][0] != '-') // A next value exists
+                    {
+                        // Validation
+                        if (strlen(argv[param_i+1]) != (RSA1024_SIZE*2)) // 2 hexs per byte
+                            die("Address must be RSA1024_SIZE.");
 
-            fgets(out_address_string, RSA1024_SIZE, stdin);
-            hexstr_to_bytes(out_address_string, RSA1024_SIZE, out_address_bytes);
+                        //hexstr_to_bytes(&argv[param_i], RSA1024_SIZE, out_address_bytes);
+                        param_i += 2;
+                        
+                        unchar *coinbase_output = malloc(TX_OUT_SIZE);
+                        gen_tx_output(NULL, MINING_REWARD, coinbase_output);
+                        hexstr_to_bytes(argv[param_i+1], RSA1024_SIZE, coinbase_output);
+                        outs[out_count++] = coinbase_output;
+                    }
+                    else
+                    {
+                        printf("Usage: %s -o <address>",argv[0]);
+                        die("No address provided.");
+                    }
+                }
+                // TODO more flag options
+                else
+                    die("Unknown flag.\nType -h for help.");
+            else
+                die("Non-flag argument.\nType -h for help.");
+            
+        }
+        //unchar *out_address_bytes = malloc(RSA1024_SIZE);
 
-            unchar *coinbase_output = malloc(TX_OUT_SIZE);
-            gen_tx_output(out_address_bytes, MINING_REWARD, coinbase_output);
-            outs[out_count++] = coinbase_output;
-        }//todo handle no input
+        
+        
         // connect to peers
         // mempool
         unchar **mempool;//todo

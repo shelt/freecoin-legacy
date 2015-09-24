@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "shared.h"
-#include "freecoin.h"
 #include "crypto.h"
 #include "transactions.h"
+#include "blockchain.h"
 
 
 /*
@@ -50,7 +50,7 @@
 void init_block(unchar target, unchar *block)
 {
     unshort version = __VERSION;
-    unint time = get_net_time();
+    unint time = 0xDEADBEEF;// TODO net time should be provided to this function from the mine function
     block[0] = (version >> 8) & 0xFF;
     block[1] =  version       & 0xFF;
     block[2] = (time >> 24)   & 0xFF;

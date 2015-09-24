@@ -1,0 +1,11 @@
+MINING
+
+every 3 seconds
+    update time in block
+every 60 seconds
+    update mempool with unadded txs
+
+on block solution recieved in inv
+    stop immediately
+    discard confirmed txs from mempool
+
