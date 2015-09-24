@@ -22,22 +22,22 @@ void handle(unsigned short quickAck, int clntSock)
     int value = 1;
 
     // Enable quickAck
-    if (quickAck && setsockopt(clntSock, IPPROTO_TCP, TCP_QUICKACK, (char *)&value, sizeof(int)) < 0)
+    if (quickAck && setsockopt(clntSock, IPPROTO_TCP, TCP_QUICKACK, &value, sizeof(int)) < 0)
         die("TCP_QUICKACK failed");
 
     /* Send received string and receive again until end of transmission */
-    while (recv(clntSock, (char*)&c_ts, sizeof(c_ts), 0) == sizeof(c_ts))      /* zero indicates end of transmission */
+    while (recv(clntSock, &c_ts, sizeof(c_ts), 0) == sizeof(c_ts))      /* zero indicates end of transmission */
     {
         // Enable quickAck
-        if (quickAck && setsockopt(clntSock, IPPROTO_TCP, TCP_QUICKACK, (char *)&value, sizeof(int)) < 0)
+        if (quickAck && setsockopt(clntSock, IPPROTO_TCP, TCP_QUICKACK, &value, sizeof(int)) < 0)
             die("TCP_QUICKACK failed");
 
         /* Echo message back to client */
-        if (send(clntSock, (char*)&c_ts, sizeof(c_ts), 0) != sizeof(c_ts))
+        if (send(clntSock, &c_ts, sizeof(c_ts), 0) != sizeof(c_ts))
             die("send() failed to send timestamp");
 
         // Enable quickAck
-        if (quickAck && setsockopt(clntSock, IPPROTO_TCP, TCP_QUICKACK, (char *)&value, sizeof(int)) < 0)
+        if (quickAck && setsockopt(clntSock, IPPROTO_TCP, TCP_QUICKACK, &value, sizeof(int)) < 0)
             die("TCP_QUICKACK failed");
     }
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     servAddr.sin_port = htons(servPort);          // Local port
 
     // Bind to the local address
-    if (bind(servSock, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
+    if (bind(servSock, &servAddr, sizeof(servAddr)) < 0)
         die("bind() failed");
 
     // Mark the socket so it will listen for incoming connections
@@ -91,14 +91,14 @@ int main(int argc, char *argv[])
         printf("Waiting for client...\n");
 
         /* Wait for a client to connect */
-        if ((clntSock = accept(servSock, (struct sockaddr *) &clientAddr, &clntLen)) < 0)
+        if ((clntSock = accept(servSock, &clientAddr, &clntLen)) < 0)
             die("accept() failed");
 
         /* clntSock is connected to a client! */
 
         printf("Handling client %s\n", inet_ntoa(clientAddr.sin_addr));
 
-        if (setsockopt(clntSock, IPPROTO_TCP, TCP_NODELAY, (char *)&value, sizeof(int)) < 0)
+        if (setsockopt(clntSock, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(int)) < 0)
             die("TCP_NODELAY failed");
 
         handle(quickAck, clntSock);

@@ -71,6 +71,10 @@ Recieving a <getdata>:
 Recieving a <mempool>:
 - Send your mempool in <inv>
 
+Recieving a <getblocks>:
+- Send an <inv> containing first 500 blocks they are missing (starting from the start block
+    they specified [likely their latest block])
+
 
 ### MINING ###
 

@@ -25,10 +25,7 @@
 
 /* 
     Creates a serialized transaction beginning at pointer tx
-    (which is already allocated). The allocated space could be
-    exactly the size of the transaction (for use in transmitting
-    mempool transactions); or an index within allocated memory
-    (for transactions within blocks).
+    (which is already allocated).
 */
 void gen_tx(unshort in_count, unshort out_count, unint lock_time, // Header variables
             unchar **ins, unchar **outs, unchar *tx)
@@ -87,34 +84,18 @@ void gen_tx_output(unchar *out_address, unint amount, unchar *tx_output)
 }
 
 
-unchar get_tx_size(unchar *tx)
+unshort get_tx_size(unchar *tx)
 {
     return ((tx[2] << 8) | tx[3]) * TX_IN_SIZE  + 
            ((tx[4] << 8) | tx[5]) * TX_OUT_SIZE + TX_HEADER_SIZE;
-}
+};
 
 
-/////////////////////////
-// MERKLE TREE HASHING //
-/////////////////////////
+
+
+
 /*
-                   ------ e81287 -----
-                   |                 |
-           ----d1074c----          70a4e6
-           |            |             |
-       -8ebc6a-     -d5e414-      -89b77c-
-       |      |     |      |      |      |
-    2d7f4d 3407a8 5edf5a 65c356 89aa32 e3e69c
-       |      |      |      |      |      |
-    sometx sometx sometx sometx sometx sometx
-
-    Accepts an array of pointers to transactions.
-    Generates hashes of those transactions.
-    Hashes those hashes in pairs. The results are TREE HASHES.
-    If it's an odd number, the final one is hashed with itself.
-    Process is repeated until one hash remains (the MERKLE ROOT).
-*/
-void gen_merkle_root(unchar **txs, unshort tx_count, unchar *outhash)
+void gen_merkle_root_hash_OLD(unchar **txs, unshort tx_count, unchar *outhash)
 {
     unchar *tree_hashes[tx_count];                // An array of pointers to leaves
     unchar *buffer = malloc(SHA256_SIZE);         // The buffer where SHA256s are generated.
@@ -177,3 +158,4 @@ void gen_merkle_root(unchar **txs, unshort tx_count, unchar *outhash)
     for(i=0; i<tx_count; i++) 
         free(tree_hashes[i]);
 };
+*/

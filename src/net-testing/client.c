@@ -46,10 +46,10 @@ int main(int argc, char *argv[])
     echoServAddr.sin_port        = htons(echoServPort); /* Server port */
 
     /* Establish the connection to the echo server */
-    if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
+    if (connect(sock, &echoServAddr, sizeof(echoServAddr)) < 0)
         die("connect() failed");
 
-    if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&value, sizeof(int)) < 0)
+    if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(int)) < 0)
         die("TCP_NODELAY failed");
 
     /* Give the server a chance */
@@ -65,11 +65,11 @@ int main(int argc, char *argv[])
         //printf("sending %ld ", c_ts);
 
         /* Send this */
-        if (send(sock, (char*)&c_ts, sizeof(c_ts), 0) != sizeof(c_ts))
+        if (send(sock, &c_ts, sizeof(c_ts), 0) != sizeof(c_ts))
             die("send() failed to send timestamp");
 
         /* Now read the echo */
-        if (recv(sock, (char*)&o_ts, sizeof(o_ts), 0) != sizeof(o_ts))
+        if (recv(sock, &o_ts, sizeof(o_ts), 0) != sizeof(o_ts))
             die("recv() failed to read timestamp");
 
         gettimeofday(&ts, NULL);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
         usleep(1000*gap);
     }
     --iterations;
-    printf("iterations %d, avg %f, max %ld, min %ld\n", iterations, (total/(double)iterations), max, min);
+    printf("iterations %d, avg %f, max %ld, min %ld\n", iterations, (total/iterations), max, min);
 
     close(sock);
     exit(0);
