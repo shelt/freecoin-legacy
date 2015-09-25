@@ -1,7 +1,7 @@
 #ifndef BLOCKCHAIN_H
 #define BLOCKCHAIN_H
 
-void get_latest_block(unchar *blockhash);
+unchar *get_latest_block(unchar *blockhash);
 
 unint get_block_num(unchar *blockhash);
 

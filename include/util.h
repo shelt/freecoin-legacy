@@ -6,5 +6,5 @@
 
 void hexstr_to_bytes(char *string, size_t bytes, unchar *bytearr);
 
-void die(char *string);
+
 #endif

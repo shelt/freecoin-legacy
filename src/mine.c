@@ -105,10 +105,10 @@ int main(int argc, char **argv)
         unint out_count = 0;                    // Count for tx_outs
         int param_i = 1;                        // Index of next argv parameter
         // TODO move this to its own parsing file and turn repetitive ifs into functions
-        while (param_i <= argc)
-        {   printf("DEBUG: %d\n",param_i); // segfault debugging
+        while (param_i < argc)
+        {
             if (argv[param_i][0] == '-')
-                if (argv[param_i][1] == 'o') // Output: -o <addr>
+                if (strlen(argv[param_i]) > 1 && argv[param_i][1] == 'o') // Output: -o <addr>
                 {
                     if (argc >= param_i && argv[param_i+1][0] != '-') // A next value exists
                     {

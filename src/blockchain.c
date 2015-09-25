@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "shared.h"
 #include "blockchain.h"
 
@@ -10,9 +11,10 @@
     hash in *blockhash.
 */
 
-void get_latest_block(unchar *blockhash)
+unchar *get_latest_block(unchar *blockhash)
 {
-    // TODO
+    // todo
+    return blockhash;
 };
 
 unint get_block_num(unchar *blockhash)
@@ -22,6 +24,12 @@ unint get_block_num(unchar *blockhash)
 
 unint get_curr_target()
 {
-    //TODO
+    unchar *latest_block = malloc(SHA256_SIZE);
+    if (get_block_num(get_latest_block(latest_block)) == RECALC_TARGET_INTERVAL)
+    {
+        // TODO time diffs
+    }
+    free(latest_block);
+    return 0;//TODO
 };
 

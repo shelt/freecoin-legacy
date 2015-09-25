@@ -80,6 +80,10 @@ void init_block(unchar target, unchar *block)
     // If this changes, modify BLOCK_HEADER_SIZE in shared.h
 };
 
+
+/************
+** SETTERS ** TODO add more
+************/
 void update_block_nonce(unchar *block, unint nonce)
 {
     block[73] = (nonce >> 24)   & 0xFF;
