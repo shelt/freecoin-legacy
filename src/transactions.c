@@ -76,7 +76,6 @@ void gen_tx_output(unchar *out_address, unint amount, unchar *tx_output)
     if (out_address != NULL)
         memcpy(&tx_output[0], out_address, RSA1024_SIZE);
     // Convert int to byte array
-    int i;
     unchar *amount_bytes = malloc(sizeof(unint));
     amount_bytes[0] = (amount >> 24) & 0xFF;
     amount_bytes[1] = (amount >> 16) & 0xFF;

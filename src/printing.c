@@ -1,5 +1,11 @@
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <errno.h>
+#include <unistd.h>
 #include <stdarg.h>
 #include "shared.h"
 
@@ -29,8 +35,13 @@ void printfv(int verbose, const char *format, ...)
         vfprintf(stdout, format, args);
 }
 
-void die(const char *string)
+void die(const char *string, ...)
 {
-    printf("Fatal: %s\n", string);
+    va_list args;
+    va_start(args, string);
+
+    printf("Fatal: ");
+    vfprintf (stdout, string, args);
+    
     exit(1);
 };

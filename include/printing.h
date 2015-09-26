@@ -3,7 +3,7 @@
 
 void print_greeting();
 void print_version();
-void printv(char *string);
-void die(char *string);
+void printfv(int verbose, const char *format, ...);
+void die(const char *string, ...);
 
 #endif
