@@ -19,6 +19,7 @@ void join_network();
 typedef struct conn_thread_params
 {
     int connfd;
+    int acting_server; // 0 for client, 1 for server
     struct sockaddr_in peeraddr; //unused
     socklen_t peerlen;           //unused
 } conn_thread_params;

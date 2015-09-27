@@ -23,17 +23,27 @@
 //int time //median
 //**mempool
 
+
+// Stores active sockets for use with network
 int socks[10];
 unint socks_count = 0;
+
+// Stores peers you know about that are up to send with addr messages
+peer_info *peers;
+unint peers_count = 0;
 
 
 void join_network()
 {
     printf("Attempting to join network...\n");
 
-    // Storing active peers which should be saved
-    peer_info *peers = malloc(MAX_PEERS_FILE_LENGTH);
-    unint peers_count = 0;
+    /* TODO revamp this; redesign it so servers tell clients about other peers AS THEY CONNECT, allowing
+       a "web" to be created.
+
+    peers = malloc(MAX_PEERS_FILE_LENGTH);
+
+    // Unconfirmed peers
+    peer_info *peers_unconf = malloc(MAX_PEERS_FILE_LENGTH);
 
     // Buffers
     char addr[100];
@@ -41,13 +51,12 @@ void join_network()
     unint last_active;
 
     // FROM FILE
-    /*
-        All peers specified in the file are loaded into memory (up to 1000).
-        We try to connect to peers until we have 8. Any failed peers are
-        removed from memory. The peerfile is then overwritten with peers in
-        memory.
-    */
-    FILE *addrfile = fopen(FILE_PEERS, "r");
+    //    All peers specified in the file are loaded into memory (up to 1000).
+    //    We try to connect to peers until we have 8. Any failed peers are
+    //    removed from memory. The peerfile is then overwritten with peers in
+    //    memory.
+    
+    FILE *addrfile = fopen(FILE_PEERS, "r+");
 
     // Load entries into memory
     while ((fscanf(addrfile, "%s %d %d", addr, &port, &last_active) == 2) && peers_count < MAX_PEERS_FILE_LENGTH)
@@ -56,19 +65,21 @@ void join_network()
         peer.addr = addr;
         peer.port = port;
         peer.last_active = last_active;
-        peers[peers_count++] = peer;
+        peers_unconf[peers_unconf_count++] = peer;
         addr[0] = '\0';
     }
     // Connect to up to 8 peers
-    for (int i=0; i<peers_count; i++)
+    for (int i=0; i<peers_unconf_count; i++)
     {
-        int peerfd = start_client_conn(peers[i].addr, peers[i].port);
+        int peerfd = start_client_conn(peers_unconf[i].addr, peers_unconf[i].port);
         if (peerfd < 0) // Failed
         {
-            peers[i] = '\0'; // Remove it
+            peers_unconf[i] = '\0'; // Set to 0 to remove it from file
         }
         else
         {
+            // Add to working peers (for addrs sending)
+            peers[peers_count++] = peer;
             // Add to socks array
             socks[socks_count++] = peerfd;
             // Check for 8
@@ -76,6 +87,7 @@ void join_network()
                 break;
         }
     }
+    */
     // FROM INPUT
     if (socks_count == 0)
     {
@@ -91,34 +103,34 @@ void join_network()
             {
                 // Add to socks array
                 socks[socks_count++] = peerfd;
-                // Add entry to memory
-                peer_info peer;
-                peer.addr = addr;
-                peer.port = port;
-                peer.last_active = get_system_time();
-                peers[peers_count++] = peer;
-                break;
+               // TODO above block revamp                
+               // Add entry to memory
+               // peer_info peer; 
+               // peer.addr = addr;
+               // peer.port = port;
+               // peer.last_active = get_system_time();
+               // peers[peers_count++] = peer;
+               // break;
             }
         } 
     }
+    /* TODO above block revamp
+    // Overwrite valid peers to file
+    ftruncate(addrfile, 0);
+    rewind(addrfile);
+    for(int i; i<peers_count; i++)
+        if(peers[i] != '\0')
+            fprintf(addrfile, "%s %d", peers[i].addr, peers[i].port);
+    fclose(addrfile);
+    free(peers);
+    */
 
     // Initiate client-server handshakes
     printf("Initiating handshakes...\n");
     for(int i=0; i<socks_count; i++)
     {
-        // Params 2 and 3 are because the handshake adds addrs
-        handshake(socks[i], peers, peers_count); 
+        handshake(socks[i]); //TODO
     }
-
-    // Overwrite valid peers to file
-    ftruncate(addrfile, 0);
-    rewind(addrfile);
-    for(int i; i<peer_count; i++)
-        if(peers[i] != '\0')
-            fprintf(addrfile, "%s %d", peers[i].addr, peers[i].port);
-    fclose(addrfile);
-    free(peers);
-    
     
     // Create own server
     printf("Creating socket listener...\n");
@@ -141,6 +153,7 @@ void *handle_connection(void *params)
 {
     // Dereferenced stack variables
     int connfd = ((conn_thread_params *)params)->connfd;
+    int acting_server = ((conn_thread_params *)params)->acting_server;
 
     int n;
     unchar *msg = malloc(MAX_MSG_SIZE);
@@ -160,16 +173,57 @@ void *handle_connection(void *params)
                 printf("Recieved METHOD_REJECT: %d",msg[1]); //TODO parse message
                 break;
             case METHOD_VERSION:
-                unshort vers = msg[1];
-                if (vers == __VERSION)
+                if (msg[1] == __VERSION)
                 {
-                    sendto_peer(connfd, METHOD_VERACK, 0, 0);
-                    sendto_peer(connfd, METHOD_ADDR,
+                    if (acting_server)
+                    {
+                        // Send verack  
+                        sendto_peer(connfd, METHOD_VERACK, 0, 0);
+                        // Send version
+                        unchar body[METHOD_VERSION_SIZE];
+                        body[0] = __version << 8 & 0xFF;
+                        body[1] = __version      & 0xFF;
+                        sendto_peer(connfd, METHOD_VERSION, body, METHOD_VERSION_SIZE);
+                    }
+                    //sendto_peer(connfd, METHOD_ADDR,  // Send addresses TODO revamp above
                 }
                 else
                     sendto_peer(connfd, METHOD_REJECT, BAD_VERSION, 1);
-            case METHOD_VERACK:
-                //TODO store that connfd has accepted our version
+                    close(connfd);
+                break;
+            case METHOD_VERACK: // TODO only send getblocks once per session?
+                //sendto_peer(connfd, METHOD_ADDR,  // Send addresses TODO revamp above
+                unchar *body = malloc(METHOD_GETBLOCKS_SIZE);
+                // Start hash param
+                get_latest_block(body);
+                // Size param
+                unshort count = MAX_GETBLOCKS_COUNT;
+                body[SHA256_SIZE]   = count << 8 & 0xFF;
+                body[SHA256_SIZE+1] = count      & 0xFF;
+                sendto_peer(connfd, METHOD_GETBLOCKS, body, SHA256_SIZE);
+                break;
+            case METHOD_ADDR:
+                //TODO revamp above
+                break;
+            case METHOD_GETBLOCKS:
+                
+                break;
+            case METHOD_MEMPOOL:
+                break;
+            case METHOD_INV:
+                break;
+            case METHOD_GETDATA:
+                break;
+            case METHOD_BLOCK:
+                break;
+            case METHOD_TX:
+                break;
+            case METHOD_ALERT:
+                break;
+            case METHOD_PING:
+                break;
+            case METHOD_PONG:
+                break;
         }
                 
         
@@ -212,6 +266,7 @@ void *server_listener(void *port)
         // Argument struct
         conn_thread_params params;
         params.connfd = connfd;
+        params.acting_server = 1;
 
         pthread_create(&handler_thread, NULL, handle_connection, &params);
 
@@ -249,6 +304,7 @@ int start_client_conn(char *addr, unint port)
     // Argument struct
     conn_thread_params params;
     params.connfd = connfd;
+    params.acting_server = 0;
 
     pthread_create(&conn_thread, NULL, handle_connection, &params);
     
@@ -261,18 +317,15 @@ void sendto_peer(int connfd, char method, char *msg, unint msg_length)
     // Create raw msg by appending method byte
     unchar *raw_msg = malloc(msg_length + 1)
     raw_msg[0] = method;
-    memcpy(&raw_msg[1], msg);
+    if (msg_length > 0)
+        memcpy(&raw_msg[1], msg);
     if ( sendto(connfd, *raw_msg, (msg_length + 1), 0, NULL, 0) < 0)
         die("Send to peer failed. ERRNO %d\n", errno); //TODO don't die because of this
     free(raw_msg);
 }
 
 ////////// Network action functions //////////
-
-void handshake(int connfd, peer_info peers, unint peers_count)
-{
-    sendto_peer(connfd, METHOD_VERSION, METHOD_VERSION_LENGTH);
-};
+//none
 
 //////////
 // MISC //
