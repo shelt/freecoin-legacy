@@ -1,18 +1,229 @@
+************ Freecoin Protocol v1 Specification ************
+
+Messages can be of fixed or variable size. If they are the
+latter, some fixed part of their content specifies the
+size of the following content.
+All messages have an additional byte prefix specifying their
+method (not included in table below).
+
+** CONSTANTS **
+* ERRORS *
+------------------------------------------------------------
+Value   : 0
+Name    : GENERIC_ERROR
+Meaning : A generic error has occured
+Content : <any>
+------------------------------------------------------------
+Value   : 1
+Name    : BAD_VERSION
+Meaning : Incompatible version
+Content : None
+------------------------------------------------------------
+Blocks
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_VERSION_INVALID
+Meaning : Block version is invalid
+Content : Offending block's hash
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_CONFLICT
+Meaning : Block's prev_hash is already in another block
+Content : Offending block's hash
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_TIME_INVALID
+Meaning : Block's time is before last block
+Content : Offending block's hash
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_MRKROOT_INVALID
+Meaning : Block's merkle_root does not match body
+Content : Offending block's hash
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_TARGET_INVALID
+Meaning : Block's target is not correct
+Content : Offending block's hash
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_HASH_INVALID
+Meaning : Block's hash isn't valid as per the target
+Content : Offending block's hash
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_BODY_INVALID
+Meaning : Transaction(s) in body are invalid. No tx-
+          specific reject messages are needed because the
+          offender shouldn't have send such a block anyway.
+Content : Offending block's hash
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_OVERFLOW
+Meaning : Block is larger than 1 MB.
+Content : Offending block's hash
+------------------------------------------------------------
+Transactions
+------------------------------------------------------------
+Value   : 
+Name    : TX_VERSION_INVALID
+Meaning : Transaction's version is invalid
+Content : Offending transaction's hash
+------------------------------------------------------------
+Value   : 
+Name    : TX_SIGNATURE_INVALID
+Meaning : Transaction input signature is invalid
+Content : Offending transaction's hash
+------------------------------------------------------------
+Value   : 
+Name    : TX_REF_USED
+Meaning : A transaction input is used already
+Content : Offending transaction's hash
+------------------------------------------------------------
+Value   : 
+Name    : TX_REF_NONEXIST
+Meaning : A transaction input doesn't exist.
+Content : Offending transaction's hash
+------------------------------------------------------------
+Value   : 
+Name    : TX_REF_OVERSPEND
+Meaning : A transaction's inputs are smaller than outputs.
+Content : Offending transaction's hash
+------------------------------------------------------------
+Value   : 
+Name    : 
+Meaning : 
+Content : 
+------------------------------------------------------------
+Value   : 
+Name    : 
+Meaning : 
+Content : 
+------------------------------------------------------------
+Generic
+------------------------------------------------------------
+Value   : 
+Name    : MESSAGE_MALFORMED
+Meaning : Data within the message was not parsed according
+          to specification.
+Content : <any>
+------------------------------------------------------------
+Value   : 
+Name    : UNKNOWN_METHOD
+Meaning : First byte represents an unknown protocol method.
+Content : <any>
+------------------------------------------------------------
+
+
+* DATATYPES * (for inv and getdata)
+0 block
+1 transaction
+
+
+** METHODS **
+------------------------------------------------------------
+Value   : 0
+Name    : reject
+Size    : 1B + 2B + <=256B (ERRORTYPE + info_size + info)
+Purpose : Tell a peer that a block/tx/time/alert/version is
+          invalid. Sent in response to various messages.
+Content : ERRORTYPE byte and info about what specifically
+          is invalid    
+------------------------------------------------------------
+Value   : 1
+Name    : version
+Size    : 2B + 4B (version + time)
+Purpose : Initialize handshake from client to server. Sent
+          unsolicited.
+Content : Version of sender's protocol implementation
+------------------------------------------------------------
+Value   : 2
+Name    : verack
+Size    : 0B
+Purpose : Acknowledge client's version during handshake.
+          Solicited by a version message.
+Content : N/A
+------------------------------------------------------------
+Value   : 3
+Name    : addr
+Size    : 4B + ?*88B (addr_count + struct peer_info[])
+Purpose : Tell peer about known active peers. Sent
+          unsolicited and during handshake.
+Content : List of addresses active <3 hrs ago along with
+          respective ports and last_active time.
+------------------------------------------------------------
+Value   : 4
+Name    : getblocks
+Size    : 256B + 2B (startblock + block_count)
+Purpose : Request an inv containing startblock and 
+          block_count blocks following it (up to 500). Used
+          to update blockchain from a block onward. Sent
+          unsolicited.
+Content : A block hash and a block count
+------------------------------------------------------------
+Value   : 5
+Name    : mempool
+Size    : 0B
+Purpose : Request an inv containing peer's mempool txs. Sent
+          unsolicited.
+Content : N/A
+------------------------------------------------------------
+Value   : 6
+Name    : inv
+Size    : 1B + ?*256B (DATATYPE + data_ids[])
+Purpose : Tell peer about blocks or txs that you have. Sent
+          unsolicited or in response to getblocks or
+          mempool.
+Content : List of tx or block hashes that you have in your
+          mempool or blockchain, respectively
+------------------------------------------------------------
+Value   : 7
+Name    : getdata
+Size    : 1B + ?*256B (DATATYPE + data_ids[])
+Purpose : Request full block(s)/tx(s). Sent unsolicited.
+Content : DATATYPE byte and identifying hash(es)
+------------------------------------------------------------
+Value   : 8
+Name    : block
+Size    : 80B to 1MB (header + body)
+Purpose : Send a full block to a peer. Solicited by getdata.
+Content : A full block.
+------------------------------------------------------------
+Value   : 9
+Name    : tx
+Size    : 10B + ?*160 + ?*132 (header + ins + outs)
+Purpose : Send a full transaction to a peer. Solicited by
+          getdata.
+Content : A full transaction.
+------------------------------------------------------------
+Value   : 10
+Name    : alert
+Size    : 1B + 4B + 100B + 1024B
+          (ALERTTYPE + time + msg + sig{ALERTTYPE+time+msg})
+Purpose : Notify entire network about network emergency.
+          Only valid if signed by RSA key at id.shelt.ca
+Content : Information about the network issue. Depending on
+          ALERTTYPE, the implementation may need to take
+          action (such as not allowing mining).
+------------------------------------------------------------
+Value   : 11
+Name    : ping
+Size    : 0B
+Purpose : Verify connectivity of peer. Sent unsolicited.
+Content : N/A
+------------------------------------------------------------
+Value   : 12
+Name    : pong
+Size    : 0B
+Purpose : Verify connectivity of self to peer. Solicited by
+          ping.
+Content : N/A
+------------------------------------------------------------
+
+
+/////OLD/////
+
 MSG CONTENTS
-inv       : some list of blocks or transactions you have (contents depends on reason for sending)
-version   : version,time
-verack    : version is accepted
-getblocks : *
-getdata   : *
-block     : *
-addr      : active (<3 hrs ago) IPs and respective timestamps of last activity
-reject    : *
-mempool   : *
-alert     : *
-ping      : *
-pong      : *
-tx        : *
-block
 * see docs for all blank
 * limit to 8 peers
 * <x> means a message of type x
@@ -42,9 +253,7 @@ Recieving <getaddr>:
 - Send client active peers from your addresslist
 
 Submit transaction(s):
-- Send all peers an <inv> containing transaction hash(es)
-- Recieve <getdata> for the transactions only you have (the new ones)
-- Send <tx>s for all new transactions to all peers who requested.
+- Send all peers an <inv> containing new transaction hash(es)
 
 Recieving an <inv>:
 - If you don't have a transaction or block listed in the <inv>, do <getdata> on all missing data.

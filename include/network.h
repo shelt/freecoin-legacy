@@ -22,6 +22,12 @@ typedef struct conn_thread_params
     struct sockaddr_in peeraddr; //unused
     socklen_t peerlen;           //unused
 } conn_thread_params;
+typedef struct peer_info
+{
+    char addr[80];
+    unint port;
+    unint last_active;
+}
 
 int start_client_conn(char *addr, unint port);
 
