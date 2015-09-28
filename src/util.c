@@ -20,4 +20,16 @@ void hexstr_to_bytes(char *string, size_t bytes, unchar *bytearr)
         bytearr[byte_pos] = (hexc_to_int(string[str_pos]) << 4) | (hexc_to_int(string[str_pos+1]));
 };
 
-void get_system_time();
+unint bytes_to_unint(char *bytes)
+{
+    return (bytes[0]<<24) + (bytes[1]<<16) + (bytes[2]<<8) +bytes[3];
+}
+unshort bytes_to_unshort(char *bytes)
+{
+    return (bytes[2]<<8) +bytes[3];
+}
+
+unint get_curr_time()
+{
+    return (unint)time(NULL);
+}

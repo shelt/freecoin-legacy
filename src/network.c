@@ -20,7 +20,6 @@
 #define MAX_PEERS_FILE_LENGTH 1000
 
 //struct net_info //?
-//int time //median
 //**mempool
 
 
@@ -38,7 +37,7 @@ void join_network()
     printf("Attempting to join network...\n");
 
     /* TODO revamp this; redesign it so servers tell clients about other peers AS THEY CONNECT, allowing
-       a "web" to be created.
+       a "web" to be created. Then, log all peers for yourself and remove ones that are found to not be up.
 
     peers = malloc(MAX_PEERS_FILE_LENGTH);
 
@@ -108,7 +107,7 @@ void join_network()
                // peer_info peer; 
                // peer.addr = addr;
                // peer.port = port;
-               // peer.last_active = get_system_time();
+               // peer.last_active = get_curr_time();
                // peers[peers_count++] = peer;
                // break;
             }
@@ -326,13 +325,4 @@ void sendto_peer(int connfd, char method, char *msg, unint msg_length)
 
 ////////// Network action functions //////////
 //none
-
-//////////
-// MISC //
-//////////
-
-unint get_net_time()
-{
-    
-};
 

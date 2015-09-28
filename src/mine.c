@@ -17,14 +17,6 @@
 // understand importance of stack vars and pass by value; no memory leaks occur
 
 
-int is_valid_blockhash(unchar *hash, unchar target)
-{
-    for (int i=0; i<target; i++)
-        if (!(hash[i] == 0x00))
-            return 0;
-    return 1;
-};
-
 void succeed(unchar *block, unchar *hash)
 {
     printf("Valid block found!\n");
@@ -50,7 +42,7 @@ void mine(unchar **outs, unshort out_count, unint lock_time)
     unint body_cursor = BLOCK_HEADER_SIZE + 1;
 
     // Add coinbase transaction
-    gen_tx(0, out_count, lock_time, NULL, outs, &workblock[77]); // Block body starts at 77th byte
+    gen_tx(0, out_count, lock_time, NULL, outs, &workblock[BLOCK_HEADER_SIZE]);
     body_cursor += (out_count * TX_OUT_SIZE) + TX_HEADER_SIZE;
     tx_count++;
     
