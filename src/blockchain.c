@@ -4,7 +4,7 @@
 #include "shared.h"
 #include "blockchain.h"
 
-#define DIR_BLOCKCHAIN data/blockchain
+#define DIR_BLOCKCHAIN "data/blockchain"
 
 #define INDEX_BLOCK_PREV_HASH 7
 
@@ -26,7 +26,16 @@ typedef struct
     unint nonce;
     unshort tx_count;
     unchar *body;
-} block_t;
+} blockdata_t;
+typedef struct
+{
+    unshort version;
+    unshort in_count;
+    unshort out_count;
+    unint lock_time;
+    unchar *ins;
+    unchar *outs;
+} txdata_t;
 
 
 void __SPECIAL__init_genesis_block()
@@ -34,6 +43,7 @@ void __SPECIAL__init_genesis_block()
 void add_block(unchar *block)
 {
     FILE *addrfile = fopen(FILE_PEERS, "r+");
+    //TODO
 };
 
 unint is_valid_blockhash(unchar *hash, unchar target)
@@ -54,24 +64,26 @@ unint check_block(blockdata_t blockdata)
         return BLOCK_EXISTS;
     if (is_valid_blockhash(hash, curr_target))
         return BLOCK_HASH_INVALID;
-    if (blockdata->version != __VERSION)
+    if (blockdata.version != __VERSION)
         return BLOCK_VERSION_INVALID;
-    if (blockdata->target != curr_target)
+    if (blockdata.target != curr_target)
         return BLOCK_TARGET_INVALID;
+    if (check_block_body(blockdata.body, blockdata.tx_count) != 0);
+        return BLOCK_BODY_INVALID;
+    //TODO unfinished checking
 
     unchar *computed_merkle = malloc(SHA256_SIZE);
-    compute_merkle_root(blockdata->body, blockdata->tx_count, computed_merkle);
-    if (memcmp(computed_merkle, blockdata->merkle_root) != 0)
+    compute_merkle_root(blockdata.body, blockdata.tx_count, computed_merkle);
+    if (memcmp(computed_merkle, blockdata.merkle_root) != 0)
         return BLOCK_MRKROOT_INVALID;
     
 
     // Latest blockspecs
-    blockspecs_t *latest_blockspecs = malloc(sizeof(blockspecs_t));
-    get_latest_blockspecs(latest_blockspecs);
+    blockspecs_t latest_blockspecs = get_latest_blockspecs(latest_blockspecs);
+    
     // Latest block data
-    blockdata_t latest_blockdata = malloc(sizeof(blockdata_t));
-    get_block_data(latest_blockspecs,latest_blockdata);
-    if (block->time < latest_blockdata->time)
+    blockdata_t latest_blockdata = get_block_data(latest_blockspecs,latest_blockdata);
+    if (block.time < latest_blockdata.time)
         return BLOCK_TIME_INVALID;
     
     
@@ -79,10 +91,27 @@ unint check_block(blockdata_t blockdata)
     free(latest_blockdata);
     free(computed_merkle);
 }
-
-
-blockspecs_t *get_latest_blockspecs(blockspecs_t *blockspecs)
+unint check_block_body(unchar *body, unint tx_count)
 {
+    unint body_cursor = 0;
+    unint retval;
+    for(i=0; i<tx_count; i++)
+    {
+        body_cursor += get_tx_size(body[body_cursor]);
+        if(retval = check_tx(body[body_cursor]) != 0);
+            return retval;
+    }
+};
+unint check_tx(unchar *tx)
+{
+    txdata_t txdata = bytes_to_txdata(tx,txdata);
+};
+
+
+blockspecs_t get_latest_blockspecs()
+{
+    blockspecs_t blockspecs;
+    
     unchar *latest = NULL;
     unint latest_num = 0;
 
@@ -100,62 +129,90 @@ blockspecs_t *get_latest_blockspecs(blockspecs_t *blockspecs)
                 latest = current;
         }
     }
-    blockspecs->num = latest_num;
-    blockspecs->hash = latest;
+    blockspecs.num = latest_num;
+    blockspecs.hash = latest;
 
     free(current);
     closedir(d);
-    return block;
+    return blockspecs;
 };
-blockdata_t *get_block_data(blockspecs_t blockspecs)
+
+blockdata_t bytes_to_blockdata(unchar *block)
 {
-    
-}
-blockdata_t *get_block_bytes(blockspecs_t blockspecs)
+    blockdata_t blockdata;
+    //TODO
+};
+txdata_t bytes_to_txdata(unchar *tx)
 {
-    
-}
+    txdata_t txdata;
+    //TODO
+};
+// This function is unix-only
+blockdata_t get_block_data(blockspecs_t blockspecs)
+{
+    blockdata_t blockdata;
+
+    // Folder
+    unchar block_folder = DIR_BLOCKCHAIN;
+    unint block_folder_length = strlen(block_folder);
+    // Null delimiting
+    unchar *hash_string = malloc(block_folder_length + SHA256_SIZE + 1); // + null char
+    memcpy(hash[string], block_folder, block_folder_length);
+    memcpy(&hash_string[block_folder_length],blockspecs.hash,SHA256_SIZE);
+    hash_string[256] = "\0";
+
+    unchar *filename[11 + SHA256_SIZE];
+    if (blockspecs.hash != NULL)
+        sprintf(filename, "%08d-*", blockspecs.num);
+    else
+        sprintf(filename, "*-%s", hash_string);
+
+    FILE *blockfile = fopen(FILE_PEERS, "r+");
+        
+};
+unchar *get_block_bytes(blockdata_t blockdata, unchar *block)
+{
+    //TODO
+};
 
 
 unint get_curr_target()
 {   
     unint retval;
     // Latest blockspecs
-    blockspecs_t *latest_blockspecs = malloc(sizeof(blockspecs_t));
-    get_latest_blockspecs(latest_blockspecs);
+    blockspecs_t latest_blockspecs = get_latest_blockspecs();
+    
     // Latest block data
-    blockdata_t latest_blockdata = malloc(sizeof(blockdata_t));
-    get_block_data(latest_blockspecs,latest_blockdata);
+    blockdata_t latest_blockdata = get_block_data(latest_blockspecs);
 
     unint curr_time = get_curr_time();
-    if (curr_time < TESTNET_EPOCH && ((curr_time - latest_blockdata->time) >= SECONDS_IN_20_MINUTES))
+    if (curr_time < TESTNET_EPOCH && ((curr_time - latest_blockdata.time) >= SECONDS_IN_20_MINUTES))
     {
         retval = 0;
     }
-    else if (latest_blockspecs->num == RECALC_TARGET_INTERVAL)
+    else if (latest_blockspecs.num == RECALC_TARGET_INTERVAL)
     {
-        // Last recalc blockspecs
-        blockspecs_t *last_recalc_blockspecs = malloc(sizeof(blockspecs_t));
-        last_recalc_blockspecs->num = latest_block_num - RECALC_TARGET_INTERVAL + 1; // 2015 blocks ago
+        // Get blockdata for 2015 blocks ago
+        blockspecs_t last_recalc_blockspecs;
+        last_recalc_blockspecs.hash = NULL;
+        last_recalc_blockspecs.num = latest_block_num - RECALC_TARGET_INTERVAL + 1; // 2015 blocks ago
+        blockdata_t last_recalc_blockdata = get_block_data(last_recalc_blockspecs);
+        
 
-        // Last recalc block data
-        blockdata_t last_recalc_blockdata = malloc(sizeof(blockdata_t));
-        get_block_data(last_recalc_blockspecs,last_recalc_blockdata);
-
-        unint timediff = latest_blockdata->time - last_recalc_blockdata->time;
+        unint timediff = latest_blockdata.time - last_recalc_blockdata.time;
         // Set upper bound on timediff
         if (timediff > SECONDS_IN_8_WEEKS)
             timediff = SECONDS_IN_8_WEEKS;
         if (timediff < (SECONDS_IN_HALF_WEEK))
         // Set lower bound on timediff
             timediff = SECONDS_IN_HALF_WEEK;
-        retval = bytes_to_unint(latest_blockspecs->target) * (2 / timediff);
+        retval = bytes_to_unint(latest_blockspecs.target) * (2 / timediff);
 
         free(last_recalc_blockspecs);
         free(last_recalc_blockdata);
     }
     else
-        retval = bytes_to_unint(latest_blockspecs->target); // Stays same
+        retval = bytes_to_unint(latest_blockspecs.target); // Stays same
 
     free(latest_blockdata);
     free(latest_blockspecs);
