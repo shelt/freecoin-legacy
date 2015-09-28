@@ -21,7 +21,7 @@ Messages can be of fixed or variable size. If they are the
 latter, some fixed part of their content specifies the
 size of the following content.
 All messages have an additional byte prefix specifying their
-method (not included in table below).
+method (not included in method table).
 
 ** ERROR CONSTANTS **
 Blocks
