@@ -17,7 +17,7 @@
 #define unshort unsigned short
 
 /* BLOCK SPECIFICATIONS */
-#define BLOCK_HEADER_SIZE 80
+#define BLOCK_HEADER_SIZE 78
 
 // 1024*1024
 #define MAX_BLOCKSIZE 1048576

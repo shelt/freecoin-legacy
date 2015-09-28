@@ -9,11 +9,6 @@ method (not included in table below).
 ** CONSTANTS **
 * ERRORS *
 ------------------------------------------------------------
-Value   : 0
-Name    : GENERIC_ERROR
-Meaning : A generic error has occured
-Content : <any>
-------------------------------------------------------------
 Value   : 1
 Name    : BAD_VERSION
 Meaning : Incompatible version
@@ -61,6 +56,11 @@ Content : Offending block's hash
 Value   : 
 Name    : BLOCK_OVERFLOW
 Meaning : Block is larger than 1 MB.
+Content : Offending block's hash
+------------------------------------------------------------
+Value   : 
+Name    : BLOCK_EXISTS
+Meaning : Block already exists in the blockchain.
 Content : Offending block's hash
 ------------------------------------------------------------
 Transactions
@@ -147,8 +147,8 @@ Content : N/A
 Value   : 3
 Name    : addr
 Size    : 4B + ?*88B (addr_count + struct peer_info[])
-Purpose : Tell peer about known active peers. Sent
-          unsolicited and during handshake.
+Purpose : Tell peer about active peers. Sent unsolicited and
+          during handshake.
 Content : List of addresses active <3 hrs ago along with
           respective ports and last_active time.
 ------------------------------------------------------------
