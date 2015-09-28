@@ -17,7 +17,7 @@
 #define unshort unsigned short
 
 /* BLOCK SPECIFICATIONS */
-#define BLOCK_HEADER_SIZE 78
+#define BLOCK_HEADER_SIZE 79
 
 // 1024*1024
 #define MAX_BLOCKSIZE 1048576
@@ -25,12 +25,12 @@
 /* TX SPECIFICATIONS */
 
 // The same as sizeof(Tx_header)
-#define TX_HEADER_SIZE 10
+#define TX_HEADER_SIZE 138
 
-// The bytesize of 1 input.  [IN_TX .. SIG]  32B + 128B    
-#define TX_IN_SIZE 160
+// The bytesize of 1 input   
+#define TX_IN_SIZE 34
 
-// The bytesize of 1 output. [PUBKEY .. AMT] 128B + 4B
+// The bytesize of 1 output
 #define TX_OUT_SIZE 132
 
 /* CRYPTO SPECIFICATIONS */

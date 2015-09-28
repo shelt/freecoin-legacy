@@ -8,15 +8,17 @@
 #include "blockchain.h"
 
 /*  ******************* TRANSACTION *******************
-    Total size = 10B+(160*input_count)+(132*output_count)
+    Total size = 138B+(34*input_count)+(132*output_count)
 
-          HEADER 10B          INPUTS 160B     OUTPUTS 132B
-    |---------------------|  |------------|  |------------|
-    0000 0000 0000 00000000  [32B][128B]...  [128B][4B]...
-    |    |    |    |         |    |          |     |
-    |    |    |    lock_time |    signature  |     amount
-    |    |    |              |               |
-    |    |    out_count   ref_tx          out_address
+          HEADER 138B              INPUTS 34B      OUTPUTS 132B
+    |----------------------------| |-----------|   |------------|
+    0000 0000 0000 00000000 [128B] [32B] 0000...   [128B][4B]...
+    |    |    |    |        |      |     |         |     |
+    |    |    |    |        sig    |     out_index |     amount
+    |    |    |    |               |               |
+    |    |    |    lock_time       |               out_address
+    |    |    |                    |
+    |    |    out_count            ref_tx
     |    |
     |    in_count
     |
@@ -28,7 +30,7 @@
     Creates a serialized transaction beginning at pointer tx
     (which is already allocated).
 */
-void gen_tx(unshort in_count, unshort out_count, unint lock_time, // Header variables
+void gen_tx(unshort in_count, unshort out_count, unint lock_time, unchar *sig, // Header variables
             unchar **ins, unchar **outs, unchar *tx)
 {
     // These are computed here for use in for-loop tests. TODO
@@ -50,6 +52,8 @@ void gen_tx(unshort in_count, unshort out_count, unint lock_time, // Header vari
     tx[8] = (lock_time >> 8)  & 0xFF;
     tx[9] =  lock_time        & 0xFF;
     
+    memcpy(&tx[10], sig, RSA1024_SIZE);
+    
     ////////////////////// END HEADER //////////////////////
     int tx_index = 10;
     int i; // Pointer index for this loop
@@ -66,10 +70,15 @@ void gen_tx(unshort in_count, unshort out_count, unint lock_time, // Header vari
     }
 }
 
-void gen_tx_input(unchar *ref_tx, unchar *sig, unchar *tx_input)
+unchar *gen_tx_input(unchar *ref_tx, unint out_index, unchar *tx_input)
 {
     memcpy(&tx_input[0], ref_tx, SHA256_SIZE);
-    memcpy(&tx_input[SHA256_SIZE], sig, RSA1024_SIZE);
+    tx_input[SHA256_SIZE] = (out_index >> 24) & 0xFF;
+    tx_input[SHA256_SIZE+1] = (out_index >> 16) & 0xFF;
+    tx_input[SHA256_SIZE+2] = (out_index >> 8)  & 0xFF;
+    tx_input[SHA256_SIZE+3] =  out_index        & 0xFF;
+
+    return tx_input;    
 }
 void gen_tx_output(unchar *out_address, unint amount, unchar *tx_output)
 {

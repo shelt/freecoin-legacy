@@ -97,14 +97,32 @@ unint check_block_body(unchar *body, unint tx_count)
     unint retval;
     for(i=0; i<tx_count; i++)
     {
-        body_cursor += get_tx_size(body[body_cursor]);
-        if(retval = check_tx(body[body_cursor]) != 0);
+        unint tx_size = get_tx_size(body[body_cursor]);
+        body_cursor += tx_size;
+        if(retval = check_tx(body[body_cursor], tx_size) != 0);
             return retval;
     }
 };
-unint check_tx(unchar *tx)
+unint check_tx(unchar *tx, unint tx_size)
 {
-    txdata_t txdata = bytes_to_txdata(tx,txdata);
+    txdata_t txdata = bytes_to_txdata(tx,tx_size);
+    
+    unint in_sum = 0;
+    unint out_sum = 0;
+    for(int i=0; i<txdata.in_count; i++)
+    {
+        txspecs_t txspecs;
+        txspecs.ref_tx = txdata[TX_HEADER_SIZE + TX_IN_SIZE*i];
+        txdata_t ref_txdata = get_tx_data(txspecs);
+        txdata.ins[i]
+        // Currentissue: TODO How are txs stored so they are queryable by tx hash but also remain ordered?
+    }
+    // for each in
+        // Inc in_sum with amount
+        // verify signature
+        // Verify it doesn't exist as an in elseware
+    // for each out
+        // inc out_sum with amount
 };
 
 
@@ -137,10 +155,20 @@ blockspecs_t get_latest_blockspecs()
     return blockspecs;
 };
 
-blockdata_t bytes_to_blockdata(unchar *block)
+blockdata_t bytes_to_blockdata(unchar *block, unchar *prev_hash)
 {
     blockdata_t blockdata;
-    //TODO
+    
+    blockdata.version     = bytes_to_unshort(block);
+    blockdata.time        = bytes_to_unint(&block[2]);
+    blockdata.prev_hash   = &block[6];
+    blockdata.merkle_root = &block[38];
+    blockdata.target      =  block[70];
+    blockdata.nonce       = &block[71];
+    blockdata.tx_count    = bytes_to_unshort(&block[75]);
+    blockdata.body        = &block[79];
+    return blockdata;
+    
 };
 txdata_t bytes_to_txdata(unchar *tx)
 {
@@ -167,8 +195,19 @@ blockdata_t get_block_data(blockspecs_t blockspecs)
     else
         sprintf(filename, "*-%s", hash_string);
 
-    FILE *blockfile = fopen(FILE_PEERS, "r+");
-        
+    FILE *blockfile = fopen(FILE_PEERS, "rb");
+    if (blockfile == NULL)
+        return NULL;
+
+    fseek(blockfile 0L, SEEK_END);
+    unint blockdata_size = ftell(fp);
+    fseek(fp, 0L, SEEK_SET);
+
+    unchar *blockraw = malloc(blockdata_size);
+    fread(blockraw, blockdata_size, blockfile);
+    fclose(blockfile);
+    
+    return bytes_to_blockdata(blockraw);
 };
 unchar *get_block_bytes(blockdata_t blockdata, unchar *block)
 {
