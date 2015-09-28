@@ -208,7 +208,7 @@ Name    : alert
 Size    : 1B + 4B + 100B + 1024B
           (ALERTTYPE + time + msg + sig{ALERTTYPE+time+msg})
 Purpose : Notify entire network about network emergency.
-          Only valid if signed by RSA key at id.shelt.ca
+          Only valid if signed by key at key.shelt.ca.
 Content : Information about the network issue. Depending on
           ALERTTYPE, the implementation may need to take
           action (such as not allowing mining).
