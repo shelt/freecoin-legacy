@@ -223,9 +223,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 
 
 
-## Procedures
-
-### Joining the network
+### Procedures
 
 #### Technical description
 - Try connecting to known nodes until one works. This is peer<sub>0</sub> .
