@@ -19,15 +19,6 @@
 
 #define MAX_PEERS_FILE_LENGTH 1000
 
-//struct net_info //?
-//**mempool
-
-/*
-- Try connecting to known nodes until one works. This is peer[0].
-(0 <= n <= 8)
-- During handshake with peer[n], ask for a random node they are connected to excluding peer[0,n-1] and any failed nodes.
-*/
-
 int initial_peer_fromfile(peer_info_t *peers)
 {
     // Nodes from file
