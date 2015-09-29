@@ -43,72 +43,65 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | Purpose  | Acknowledge client's version during handshake. Tells a client about which node to connect to next. Solicited by a getnode message or sent unsolicited.  |
 | Content  | N/A  |
 
-| Name | addr |
-| ---- | ---- |
-| Value    | 3  |
-| Size     | 4B + ?*88B (addr_count + struct peer_info[])  |
-| Purpose  | Tell peer about active peers. Sent unsolicited and during handshake.  |
-| Content  | List of addresses active <3 hrs ago along with respective ports and last_active time.  |
-
 | Name | getblocks |
 | ---- | ---- |
-| Value    | 4  |
+| Value    | 3  |
 | Size     | 256B + 2B (startblock + block_count)  |
 | Purpose  | Request an inv containing startblock and block_count blocks following it (up to 500). Used to update blockchain from a block onward. Sent unsolicited.  |
 | Content  | A block hash and a block count.  |
 
 | Name | mempool |
 | ---- | ---- |
-| Value    | 5  |
+| Value    | 4  |
 | Size     | 0B  |
 | Purpose  | Request an inv containing peer's mempool txs. Sent unsolicited.  |
 | Content  | N/A  |
 
 | Name | inv |
 | ---- | ---- |
-| Value    | 6  |
+| Value    | 5  |
 | Size     | 1B + ?*256B (DATATYPE + data_ids[])  |
 | Purpose  | Tell peer about blocks or txs that you have. Sent unsolicited or in response to getblocks or mempool.  |
 | Content  | List of tx or block hashes that you have in your mempool or blockchain, respectively.  |
 
 | Name | getdata |
 | ---- | ---- |
-| Value    | 7  |
+| Value    | 6  |
 | Size     | 1B + ?*256B (DATATYPE + data_ids[])  |
 | Purpose  | Request full block(s)/tx(s). Sent unsolicited.  |
 | Content  | DATATYPE byte and identifying hash(es).  |
 
 | Name | block |
 | ---- | ---- |
-| Value    | 8  |
+| Value    | 7  |
 | Size     | 80B to 1MB (header + body)  |
 | Purpose  | Send a full block to a peer. Solicited by getdata.  |
 | Content  | A full block.  |
 
 | Name | tx |
 | ---- | ---- |
-| Value    | 9  |
+| Value    | 8  |
 | Size     | 10B + ?*160 + ?*132 (header + ins + outs)  |
 | Purpose  | Send a full transaction to a peer. Solicited by getdata.  |
 | Content  | A full transaction.  |
 
 | Name | alert |
 | ---- | ---- |
-| Value    | 10  |
+| Value    | 9  |
 | Size     | 1B + 4B + 100B + 1024B (ALERTTYPE + time + msg + sig{ALERTTYPE+time+msg})  |
 | Purpose  | Notify entire network about network emergency. Only valid if signed by key at key.shelt.ca.  |
 | Content  | Information about the network issue. Depending on ALERTTYPE, the implementation may need to take action (such as not allowing mining).  |
 
 | Name | ping |
 | ---- | ---- |
-| Value    | 11  |
+| Value    | 10  |
 | Size     | 0B  |
 | Purpose  | Verify connectivity of peer. Sent unsolicited.  |
 | Content  | N/A  |
 
 | Name | pong |
 | ---- | ---- |
-| Value    | 12  |
+| Value    | 11  |
 | Size     | 0B  |
 | Purpose  | Verify connectivity of self to peer. Solicited by ping. |
 | Content  | N/A  |
