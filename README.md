@@ -244,42 +244,42 @@ With banks that deal with regular currencies, all regulation happens in one plac
 - Select a random peer that isn't excluded by the `<getnode>` message and send it to the client in a `<node>`
 - Send a `<node>` of your new peer to your other peers
 
-Receiving `<getnode>`:
+#### Receiving `<getnode>`:
 - *See above*
 
-Receiving `<node>`:
+#### Receiving `<node>`:
 - If you have less than 8 peers, connect to the specified node.
 
-Submit transaction(s):
+#### Submit transaction(s):
 - Send all peers an `<inv>` containing new transaction hash(es)
 
-Recieving an `<inv>`:
+#### Recieving an `<inv>`:
 - If you don't have a transaction or block listed in the `<inv>, do <getdata>` on all missing data.
 - Verify the data
 - If it's valid, store the data where it belongs (mempool if tx or blockchain if block, then interrupt miner)
 - If it isn't valid, send `<reject>`
 
-Recieving a `<mempool>`
+#### Recieving a `<mempool>`
 - Send an `<inv>` of your mempool
 
 
-Recieving a `<tx>` (which only happens after a request for it):
+#### Recieving a `<tx>` (which only happens after a request for it):
 - Verify integrity (if invalid, send `<reject>`)
 - If you're working on a block and it contains transaction(s), add it to your local mempool
 - Send it in an `<inv>` to peers
 
-Recieving a `<block>` (which only happens after a request for it):
+#### Recieving a `<block>` (which only happens after a request for it):
 - Verify integrity (if invalid, send `<reject>`)
 - Add it to your blockchain
 - Send it in an `<inv>` to peers
 
-Recieving a `<getdata>`:
+#### Recieving a `<getdata>`:
 - Send the requested data.
 
-Recieving a `<mempool>`:
+#### Recieving a `<mempool>`:
 - Send your mempool in `<inv>`
 
-Recieving a `<getblocks>`:
+#### Recieving a `<getblocks>`:
 - Send an `<inv>` containing first 500 blocks they are missing (starting from the start block
     they specified [likely their latest block])
 
