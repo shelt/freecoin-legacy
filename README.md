@@ -16,7 +16,8 @@ With banks that deal with regular currencies, all regulation happens in one plac
 #####Revision 4 - 9/28/15
 
 > Freecoin uses a session-layer protocol that enables peer-to-peer communication. It is intended to be used specifically for freecoin. 
-> The freecoin protocol requires a reliable underlying transport layer protocol. This is due to the nature of the exchanged data and prevents congestion. 
+>
+> The freecoin protocol requires a reliable underlying transport layer protocol. This is due to the nature of the exchanged data; info must be able to permeate the network quickly.
 
 ## Message content types
 > Messages can be of fixed or variable size. If they are the latter, some fixed part of their content specifies the size of the following content. All messages have an additional byte prefix specifying their method (not included in method table).
@@ -28,18 +29,18 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | Purpose  | Tell a peer that a block/tx/time/alert/version is invalid. Sent in response to various messages.  |
 | Content  | ERRORTYPE byte and info about what specifically is invalid.    |
 
-| Name | version |
+| Name | getnode |
 | ---- | ---- |
 | Value    | 1  |
-| Size     | 2B + 4B (version + time)  |
-| Purpose  | Initialize handshake from client to server. Sent unsolicited.  |
-| Content  | Version of sender's protocol implementation.  |
+| Size     | 2B + 4B (peer_info_t + excludes)  |
+| Purpose  | Initializes handshake from client to server. Requests a random peer to connect to. Sent unsolicited.  |
+| Content  | Version of sender's protocol implementation; exclusions.  |
 
-| Name | verack |
+| Name | node |
 | ---- | ---- |
 | Value    | 2  |
 | Size     | 0B  |
-| Purpose  | Acknowledge client's version during handshake. Solicited by a version message.  |
+| Purpose  | Acknowledge client's version during handshake. Tells a client about which node to connect to next. Solicited by a getnode message or sent unsolicited.  |
 | Content  | N/A  |
 
 | Name | addr |
