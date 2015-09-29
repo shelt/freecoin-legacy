@@ -15,7 +15,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 ## Protocol specification
 #####Revision 4 - 9/28/15
 
-> The freecoin uses a session-layer protocol that enables peer-to-peer communication. It is intended to be used specifically for freecoin. Due to the nature of cryptocurrencies, the protocol is developed to allow signals to quickly permeate the entire network in seconds, and remain this way for a network of any scale.
+> Freecoin uses a session-layer protocol that enables peer-to-peer communication. It is intended to be used specifically for freecoin. 
 > The freecoin protocol requires a reliable underlying transport layer protocol. This is due to the nature of the exchanged data and prevents congestion. 
 
 ## Message content types
