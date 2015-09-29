@@ -16,19 +16,19 @@
 
 void join_network();
 
-typedef struct conn_thread_params
+typedef struct
 {
     int connfd;
     int acting_server; // 0 for client, 1 for server
     struct sockaddr_in peeraddr; //unused
     socklen_t peerlen;           //unused
 } conn_thread_params;
-typedef struct peer_info
+typedef struct 
 {
     char addr[80];
     unint port;
-    unint last_active;
-}
+    int connfd;
+} peer_info_t;
 
 int start_client_conn(char *addr, unint port);
 

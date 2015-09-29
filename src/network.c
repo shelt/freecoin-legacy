@@ -22,75 +22,90 @@
 //struct net_info //?
 //**mempool
 
+/*
+- Try connecting to known nodes until one works. This is peer[0].
+(0 <= n <= 8)
+- During handshake with peer[n], ask for a random node they are connected to excluding peer[0,n-1] and any failed nodes.
+*/
 
-// Stores active sockets for use with network
-int socks[10];
-unint socks_count = 0;
-
-// Stores peers you know about that are up to send with addr messages
-peer_info *peers;
-unint peers_count = 0;
-
-
-void join_network()
+int initial_peer_fromfile(peer_info_t *peers)
 {
-    printf("Attempting to join network...\n");
-
-    /* TODO revamp this; redesign it so servers tell clients about other peers AS THEY CONNECT, allowing
-       a "web" to be created. Then, log all peers for yourself and remove ones that are found to not be up.
-
-    peers = malloc(MAX_PEERS_FILE_LENGTH);
-
-    // Unconfirmed peers
-    peer_info *peers_unconf = malloc(MAX_PEERS_FILE_LENGTH);
+    // Nodes from file
+    peer_info_t *nodes_fromfile = malloc(sizeof(peer_info_t)*MAX_PEERS_FILE_LENGTH);
+    nodes_fromfile_count = 0;
 
     // Buffers
     char addr[100];
     unint port;
-    unint last_active;
 
     // FROM FILE
     //    All peers specified in the file are loaded into memory (up to 1000).
-    //    We try to connect to peers until we have 8. Any failed peers are
+    //    We try to connect to an initial peer. Any failed peers are
     //    removed from memory. The peerfile is then overwritten with peers in
     //    memory.
     
     FILE *addrfile = fopen(FILE_PEERS, "r+");
 
     // Load entries into memory
-    while ((fscanf(addrfile, "%s %d %d", addr, &port, &last_active) == 2) && peers_count < MAX_PEERS_FILE_LENGTH)
+    while ((fscanf(addrfile, "%s %d %d", addr, &port, &last_active) == 2) && nodes_fromfile_count < MAX_PEERS_FILE_LENGTH)
     {
-        peer_info peer;
-        peer.addr = addr;
-        peer.port = port;
-        peer.last_active = last_active;
-        peers_unconf[peers_unconf_count++] = peer;
+        peer_info_t node;
+        node.addr = addr;
+        node.port = port;
+        node.last_active = last_active;
+        nodes_fromfile[nodes_fromfile_count++] = node;
         addr[0] = '\0';
     }
-    // Connect to up to 8 peers
-    for (int i=0; i<peers_unconf_count; i++)
+    int retval = 0;
+    // Find initial peer
+    for (int i=0; i<nodes_fromfile_count; i++)
     {
-        int peerfd = start_client_conn(peers_unconf[i].addr, peers_unconf[i].port);
+        int peerfd = start_client_conn(nodes_fromfile[i].addr, nodes_fromfile[i].port);
         if (peerfd < 0) // Failed
         {
-            peers_unconf[i] = '\0'; // Set to 0 to remove it from file
+            nodes_fromfile[i] = '\0'; // Set to 0 to remove it from file
         }
         else
         {
-            // Add to working peers (for addrs sending)
-            peers[peers_count++] = peer;
-            // Add to socks array
-            socks[socks_count++] = peerfd;
-            // Check for 8
-            if (socks_count >= 8)
-                break;
+            peer_info_t peer;
+            memcpy(peer, nodes_fromfile[i], sizeof(peer_info_t));
+            peer.connfd = peerfd;
+            peers[0] = peer;
+            retval = 1;
+            break;
         }
     }
-    */
+
+    // Overwrite valid peers to file
+    ftruncate(addrfile, 0);
+    rewind(addrfile);
+    for(int i; i<nodes_fromfile_count; i++)
+        if(nodes_fromfile[i] != '\0')
+            fprintf(addrfile, "%s %d", nodes_fromfile[i].addr, nodes_fromfile[i].port);
+    fclose(addrfile);
+    free(nodes_fromfile);
+
+    return retval;
+};
+
+void join_network()
+{
+    printf("Attempting to join network...\n");
+
+    // Peers AKA connected nodes
+    peer_info_t *peers = malloc(sizeof(peers)*50);
+    unint peers_count = 0;
+
+    int success = initial_peer_fromfile(peers);
+    if (success)
+        peers_count++;
+    else
     // FROM INPUT
-    if (socks_count == 0)
     {
-        printf("No peers found in peerfile.\nEnter manually: \n");
+        // Buffers
+        char addr[100];
+        unint port;
+        printf("Failed to connect to nodes from peerfile. \nEnter manually: \n");
         while(1)
         {
             scanf("%s %d", addr, &port);
@@ -98,38 +113,21 @@ void join_network()
             if (peerfd < 0)
             {
                 addr[0] = '\0'; // Remove it
+                printf("Failed to connect to node. \nEnter another: \n");
             else
             {
-                // Add to socks array
-                socks[socks_count++] = peerfd;
-               // TODO above block revamp                
-               // Add entry to memory
-               // peer_info peer; 
-               // peer.addr = addr;
-               // peer.port = port;
-               // peer.last_active = get_curr_time();
-               // peers[peers_count++] = peer;
-               // break;
+                peer_info_t peer; 
+                peer.addr = addr;
+                peer.port = port;
+                peers[0] = peer;
+                peers_count++;
+                break;
             }
         } 
     }
-    /* TODO above block revamp
-    // Overwrite valid peers to file
-    ftruncate(addrfile, 0);
-    rewind(addrfile);
-    for(int i; i<peers_count; i++)
-        if(peers[i] != '\0')
-            fprintf(addrfile, "%s %d", peers[i].addr, peers[i].port);
-    fclose(addrfile);
-    free(peers);
-    */
 
     // Initiate client-server handshakes
-    printf("Initiating handshakes...\n");
-    for(int i=0; i<socks_count; i++)
-    {
-        handshake(socks[i]); //TODO
-    }
+    webify(peers, &peers_count);
     
     // Create own server
     printf("Creating socket listener...\n");
@@ -137,7 +135,15 @@ void join_network()
     unint port = SERVER_PORT;
     pthread_create(&server, NULL, server_listener, &port);
     sleep(5); // TODO We can do better than this!
-}
+};
+
+void webify(peer_info_t *peers, unint *peers_count)
+{
+    if (peers_count == 0)
+        die("Webify: need initial peer");
+    sendto_peer(peers[*peers_count-1], METHOD_GETPEER, peers, sizeof(peer_info_t)*peers_count);
+};
+//TODO mutex peers and peers_count
 
 ///////////////////////
 // NETWORK FUNCTIONS //
@@ -187,7 +193,7 @@ void *handle_connection(void *params)
                     //sendto_peer(connfd, METHOD_ADDR,  // Send addresses TODO revamp above
                 }
                 else
-                    sendto_peer(connfd, METHOD_REJECT, BAD_VERSION, 1);
+                    sendto_peer(connfd, METHOD_REJECT, &BAD_VERSION, 1);
                     close(connfd);
                 break;
             case METHOD_VERACK: // TODO only send getblocks once per session?
