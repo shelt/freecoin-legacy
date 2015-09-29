@@ -19,7 +19,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 >
 > The freecoin protocol requires a reliable underlying transport layer protocol. This is due to the nature of the exchanged data; info must be able to permeate the network quickly.
 
-## Message content types
+### Message content types
 > Messages can be of fixed or variable size. If they are the latter, some fixed part of their content specifies the size of the following content. All messages have an additional byte prefix specifying their method (not included in method table).
 
 | Name | reject |
