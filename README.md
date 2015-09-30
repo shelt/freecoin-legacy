@@ -221,7 +221,10 @@ With banks that deal with regular currencies, all regulation happens in one plac
 
 #### Technical description
 - Try connecting to known nodes until one works. This is peer<sub>0</sub> .
-- Ask peer<sub>n</sub> what peers they are connected to. Select a node randomly from this pool (excluding yourself,  peer<sub>[0,n‑1]</sub> and any nodes you've failed to connect to) for `(0 <= n < 8)`. This is peer<sub>n+1</sub>.
+
+For `(0 <= n < 8)`:
+
+- Ask peer<sub>n</sub> what peers they are connected to. Select a node randomly from this pool (excluding yourself,  peer<sub>[0,n‑1]</sub> and any nodes you've failed to connect to). This is peer<sub>n+1</sub>.
 - If peer<sub>n</sub> for `n>0` has less than 8 peers, send them a list of all your peers.
 - If peer<sub>n</sub> for `n>0` has no nodes that are valid to you (according to above exclusions), select another node from the same pool you selected peer<sub>n</sub> from.
 
