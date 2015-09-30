@@ -132,7 +132,7 @@ void webify(peer_info_t *peers, unint *peers_count)
 {
     if (peers_count == 0)
         die("Webify: need initial peer");
-    sendto_peer(peers[*peers_count-1], METHOD_GETPEER, peers, sizeof(peer_info_t)*peers_count);
+    sendto_peer(peers[*peers_count-1], CTYPE_GETPEERS, 0, 0);
 };
 //TODO mutex peers and peers_count
 
@@ -163,62 +163,53 @@ void *handle_connection(void *params)
         //msg[n] = 0; not a string, TODO
         
         // Parsing
+        if (msg[1] != __VERSION)
+        {
+            sendto_peer(connfd, CTYPE_REJECT, &BAD_VERSION, 1);
+            close(connfd);
+        }
         switch (msg[0])
         {
-            case METHOD_REJECT:
-                printf("Recieved METHOD_REJECT: %d",msg[1]); //TODO parse message
+            case CTYPE_REJECT:
+                printf("Recieved CTYPE_REJECT: %d",msg[1]); //TODO parse message
                 break;
-            case METHOD_VERSION:
-                if (msg[1] == __VERSION)
-                {
-                    if (acting_server)
-                    {
-                        // Send verack  
-                        sendto_peer(connfd, METHOD_VERACK, 0, 0);
-                        // Send version
-                        unchar body[METHOD_VERSION_SIZE];
-                        body[0] = __version << 8 & 0xFF;
-                        body[1] = __version      & 0xFF;
-                        sendto_peer(connfd, METHOD_VERSION, body, METHOD_VERSION_SIZE);
-                    }
-                    //sendto_peer(connfd, METHOD_ADDR,  // Send addresses TODO revamp above
-                }
-                else
-                    sendto_peer(connfd, METHOD_REJECT, &BAD_VERSION, 1);
-                    close(connfd);
-                break;
-            case METHOD_VERACK: // TODO only send getblocks once per session?
-                //sendto_peer(connfd, METHOD_ADDR,  // Send addresses TODO revamp above
-                unchar *body = malloc(METHOD_GETBLOCKS_SIZE);
+           /* case CTYPE_VERACK: // TODO only send getblocks once per session?
+                //sendto_peer(connfd, CTYPE_ADDR,  // Send addresses TODO revamp above
+                unchar *body = malloc(CTYPE_GETBLOCKS_SIZE);
                 // Start hash param
                 get_latest_block(body);
                 // Size param
                 unshort count = MAX_GETBLOCKS_COUNT;
                 body[SHA256_SIZE]   = count << 8 & 0xFF;
                 body[SHA256_SIZE+1] = count      & 0xFF;
-                sendto_peer(connfd, METHOD_GETBLOCKS, body, SHA256_SIZE);
-                break;
-            case METHOD_ADDR:
+                sendto_peer(connfd, CTYPE_GETBLOCKS, body, SHA256_SIZE);
+                break;  */
+            case CTYPE_GETPEERS:
                 //TODO revamp above
                 break;
-            case METHOD_GETBLOCKS:
+            case CTYPE_GETBLOCKS:
                 
                 break;
-            case METHOD_MEMPOOL:
+            case CTYPE_MEMPOOL:
                 break;
-            case METHOD_INV:
+            case CTYPE_INV:
+                if (msg[2] == DATATYPE_BLOCK)
+                {
+                    // TODO
+                }
+                        
                 break;
-            case METHOD_GETDATA:
+            case CTYPE_GETDATA:
                 break;
-            case METHOD_BLOCK:
+            case CTYPE_BLOCK:
                 break;
-            case METHOD_TX:
+            case CTYPE_TX:
                 break;
-            case METHOD_ALERT:
+            case CTYPE_ALERT:
                 break;
-            case METHOD_PING:
+            case CTYPE_PING:
                 break;
-            case METHOD_PONG:
+            case CTYPE_PONG:
                 break;
         }
                 
@@ -308,11 +299,14 @@ int start_client_conn(char *addr, unint port)
 }
 
 ///// Misc /////
-void sendto_peer(int connfd, char method, char *msg, unint msg_length)
+void sendto_peer(int connfd, char CTYPE, char *msg, unint msg_length)
 {
-    // Create raw msg by appending method byte
+    //TODO version bytes (2)
+    // Create raw msg by appending CTYPE byte
     unchar *raw_msg = malloc(msg_length + 1)
-    raw_msg[0] = method;
+    raw_msg[0] = __version << 8 & 0xFF;
+    raw_msg[1] = __version      & 0xFF;
+    raw_msg[2] = CTYPE;
     if (msg_length > 0)
         memcpy(&raw_msg[1], msg);
     if ( sendto(connfd, *raw_msg, (msg_length + 1), 0, NULL, 0) < 0)
