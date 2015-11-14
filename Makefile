@@ -37,5 +37,5 @@ $(TARGETS): $$(addprefix $(O_DIR)/, $$($$@_PREREQS))
 init:
 	-mkdir -p $(O_DIR) $(B_DIR)
 clean:
-	-rm -f $(O_DIR)/*
-	-rm -f $(B_DIR)/*
+	-rm -f ./$(O_DIR)/*
+	-rm -f ./$(B_DIR)/*
