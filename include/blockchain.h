@@ -1,12 +1,10 @@
 #ifndef BLOCKCHAIN_H
 #define BLOCKCHAIN_H
 
-unchar *get_latest_block(unchar *blockhash);
+#include "shared.h"
 
-unint get_block_num(unchar *blockhash);
-
-unint get_curr_target();
-
+uint get_next_target(uchar *block_hash);
+uint is_valid_blockhash(uchar *hash, uchar target);
 
 
 #endif
