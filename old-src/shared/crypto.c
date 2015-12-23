@@ -14,7 +14,7 @@
 #define SIG0(x) (ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ ((x) >> 3))
 #define SIG1(x) (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10))
 
-uint k[64] =
+unint k[64] =
 {
    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -27,9 +27,9 @@ uint k[64] =
 };
 
 
-void sha256_transform(SHA256_CTX *ctx, uchar data[])
+void sha256_transform(SHA256_CTX *ctx, unchar data[])
 {  
-   uint a,b,c,d,e,f,g,h,i,j,t1,t2,m[64];
+   unint a,b,c,d,e,f,g,h,i,j,t1,t2,m[64];
       
    for (i=0,j=0; i < 16; ++i, j += 4)
       m[i] = (data[j] << 24) | (data[j+1] << 16) | (data[j+2] << 8) | (data[j+3]);
@@ -84,9 +84,9 @@ void sha256_init(SHA256_CTX *ctx)
    ctx->state[7] = 0x5be0cd19;
 }
 
-void sha256_update(SHA256_CTX *ctx, uchar data[], size_t len)
+void sha256_update(SHA256_CTX *ctx, unchar data[], size_t len)
 {  
-   uint i;
+   unint i;
    
    for (i=0; i < len; ++i)
    { 
@@ -101,14 +101,14 @@ void sha256_update(SHA256_CTX *ctx, uchar data[], size_t len)
    }  
 }
 // Access the current state of the transformation TODO
-void sha256_state(SHA256_CTX *ctx, uchar state[])
+void sha256_state(SHA256_CTX *ctx, unchar state[])
 {
     //TODO
 };
 
-void sha256_final(SHA256_CTX *ctx, uchar hash[])
+void sha256_final(SHA256_CTX *ctx, unchar hash[])
 {  
-   uint i; 
+   unint i; 
    
    i = ctx->datalen; 
    
@@ -144,13 +144,13 @@ void sha256_final(SHA256_CTX *ctx, uchar hash[])
    // reverse all the bytes when copying the final state to the output hash. 
    for (i=0; i < 4; ++i)
    { 
-      hash[i]    = (ctx->state[0]);// >> (24-i*8)) & 0x000000ff;
-      hash[i+4]  = (ctx->state[1]);// >> (24-i*8)) & 0x000000ff;
-      hash[i+8]  = (ctx->state[2]);// >> (24-i*8)) & 0x000000ff;
-      hash[i+12] = (ctx->state[3]);// >> (24-i*8)) & 0x000000ff;
-      hash[i+16] = (ctx->state[4]);// >> (24-i*8)) & 0x000000ff;
-      hash[i+20] = (ctx->state[5]);// >> (24-i*8)) & 0x000000ff;
-      hash[i+24] = (ctx->state[6]);// >> (24-i*8)) & 0x000000ff;
-      hash[i+28] = (ctx->state[7]);// >> (24-i*8)) & 0x000000ff;
-   }
-}
+      hash[i]    = (ctx->state[0] >> (24-i*8)) & 0x000000ff; 
+      hash[i+4]  = (ctx->state[1] >> (24-i*8)) & 0x000000ff; 
+      hash[i+8]  = (ctx->state[2] >> (24-i*8)) & 0x000000ff;
+      hash[i+12] = (ctx->state[3] >> (24-i*8)) & 0x000000ff;
+      hash[i+16] = (ctx->state[4] >> (24-i*8)) & 0x000000ff;
+      hash[i+20] = (ctx->state[5] >> (24-i*8)) & 0x000000ff;
+      hash[i+24] = (ctx->state[6] >> (24-i*8)) & 0x000000ff;
+      hash[i+28] = (ctx->state[7] >> (24-i*8)) & 0x000000ff;
+   }  
+}  

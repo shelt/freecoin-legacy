@@ -1,5 +1,6 @@
 #include "shared.h"
 #include "printing.h"
+#include "queue.h"
 #include "network.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -8,26 +9,28 @@
 #include <strings.h>
 #include <pthread.h>
 #include <errno.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <unistd.h>
 
 #define FILE_PEERS "data/peers"
 #define SERVER_PORT 30330
 //1024*1024*5
 #define MAX_MSG_SIZE 5242880
-
+#define MAX_LINE_SIZE 1024
 #define MAX_PEERS_FILE_LENGTH 1000
 
-int initial_peer_fromfile(peer_info_t *peers)
+int initial_peer_fromfile(peer_info_t *peers, Net_info *net_info)
 {
     // Nodes from file
     peer_info_t *nodes_fromfile = malloc(sizeof(peer_info_t)*MAX_PEERS_FILE_LENGTH);
-    nodes_fromfile_count = 0;
+    uint nodes_fromfile_count = 0;
 
     // Buffers
+    char line[MAX_LINE_SIZE];
     char addr[100];
-    unint port;
+    uint port;
 
     // FROM FILE
     //    All peers specified in the file are loaded into memory (up to 1000).
@@ -36,14 +39,17 @@ int initial_peer_fromfile(peer_info_t *peers)
     //    memory.
     
     FILE *addrfile = fopen(FILE_PEERS, "r+");
+    if (addrfile == NULL)
+        die("Failed to access address file");
 
     // Load entries into memory
-    while ((fscanf(addrfile, "%s %d %d", addr, &port, &last_active) == 2) && nodes_fromfile_count < MAX_PEERS_FILE_LENGTH)
+    while (fgets(line, MAX_LINE_SIZE, addrfile) && nodes_fromfile_count < MAX_PEERS_FILE_LENGTH)
     {
+        if (sscanf(line, "%s %d", addr, &port) != 3)
+            break;
         peer_info_t node;
-        node.addr = addr;
+        strcpy(node.addr, addr);
         node.port = port;
-        node.last_active = last_active;
         nodes_fromfile[nodes_fromfile_count++] = node;
         addr[0] = '\0';
     }
@@ -51,27 +57,24 @@ int initial_peer_fromfile(peer_info_t *peers)
     // Find initial peer
     for (int i=0; i<nodes_fromfile_count; i++)
     {
-        int peerfd = start_client_conn(nodes_fromfile[i].addr, nodes_fromfile[i].port);
+        int peerfd = start_client_conn(nodes_fromfile[i].addr, nodes_fromfile[i].port, net_info);
         if (peerfd < 0) // Failed
         {
-            nodes_fromfile[i] = '\0'; // Set to 0 to remove it from file
+            nodes_fromfile[i].invalid = 1; // mark for removal
         }
         else
         {
-            peer_info_t peer;
-            memcpy(peer, nodes_fromfile[i], sizeof(peer_info_t));
-            peer.connfd = peerfd;
-            peers[0] = peer;
+            nodes_fromfile[i].connfd = peerfd;
+            memcpy(&(peers[0]), &(nodes_fromfile[i]), sizeof(peer_info_t));
             retval = 1;
             break;
         }
     }
 
     // Overwrite valid peers to file
-    ftruncate(addrfile, 0);
-    rewind(addrfile);
+    addrfile = freopen(NULL, "w", addrfile);
     for(int i; i<nodes_fromfile_count; i++)
-        if(nodes_fromfile[i] != '\0')
+        if(nodes_fromfile[i].invalid != 1)
             fprintf(addrfile, "%s %d", nodes_fromfile[i].addr, nodes_fromfile[i].port);
     fclose(addrfile);
     free(nodes_fromfile);
@@ -79,15 +82,23 @@ int initial_peer_fromfile(peer_info_t *peers)
     return retval;
 };
 
-void join_network()
-{
-    printf("Attempting to join network...\n");
+//TODO deal with these
+void webify(peer_info_t *peers, uint *peers_count);
+void *server_listener(void *net_info);
+void sendto_peer(int connfd, char CTYPE, uchar *msg, uint msg_length);
 
+Net_info *join_network()
+{
+    Net_info *net_info = malloc(sizeof(Net_info));
+    net_info->server_active = 0;
+    net_info->pool = queue_init();
+    net_info->foreign_blocks_found = 0;
+ 
     // Peers AKA connected nodes
     peer_info_t *peers = malloc(sizeof(peers)*50);
-    unint peers_count = 0;
+    uint peers_count = 0;
 
-    int success = initial_peer_fromfile(peers);
+    int success = initial_peer_fromfile(peers, net_info);
     if (success)
         peers_count++;
     else
@@ -95,26 +106,27 @@ void join_network()
     {
         // Buffers
         char addr[100];
-        unint port;
+        uint port;
         printf("Failed to connect to nodes from peerfile. \nEnter manually: \n");
         while(1)
         {
             scanf("%s %d", addr, &port);
-            int peerfd = start_client_conn(addr, port));
+            int peerfd = start_client_conn(addr, port, net_info);
             if (peerfd < 0)
             {
                 addr[0] = '\0'; // Remove it
                 printf("Failed to connect to node. \nEnter another: \n");
+            }
             else
             {
-                peer_info_t peer; 
-                peer.addr = addr;
+                peer_info_t peer;
+                strcpy(peer.addr, addr);
                 peer.port = port;
                 peers[0] = peer;
                 peers_count++;
                 break;
             }
-        } 
+        }
     }
 
     // Initiate client-server handshakes
@@ -123,16 +135,19 @@ void join_network()
     // Create own server
     printf("Creating socket listener...\n");
     pthread_t server;
-    unint port = SERVER_PORT;
-    pthread_create(&server, NULL, server_listener, &port);
-    sleep(5); // TODO We can do better than this!
+    net_info->server_port = SERVER_PORT;
+    
+    pthread_create(&server, NULL, server_listener, net_info);
+    while(net_info->server_active != 1)
+        sleep(2);
+    return net_info;
 };
 
-void webify(peer_info_t *peers, unint *peers_count)
+void webify(peer_info_t *peers, uint *peers_count)
 {
     if (peers_count == 0)
         die("Webify: need initial peer");
-    sendto_peer(peers[*peers_count-1], CTYPE_GETPEERS, 0, 0);
+    sendto_peer(peers[*peers_count-1].connfd, CTYPE_GETNODES, 0, 0);
 };
 //TODO mutex peers and peers_count
 
@@ -150,9 +165,10 @@ void *handle_connection(void *params)
     // Dereferenced stack variables
     int connfd = ((conn_thread_params *)params)->connfd;
     int acting_server = ((conn_thread_params *)params)->acting_server;
+    Net_info *net_info = ((conn_thread_params *)params)->net_info;
 
     int n;
-    unchar *msg = malloc(MAX_MSG_SIZE);
+    uchar *msg = malloc(MAX_MSG_SIZE);
     for(;;)
     {
         n = recvfrom(connfd, msg, MAX_MSG_SIZE, 0, NULL, 0);
@@ -165,7 +181,8 @@ void *handle_connection(void *params)
         // Parsing
         if (msg[1] != __VERSION)
         {
-            sendto_peer(connfd, CTYPE_REJECT, &BAD_VERSION, 1);
+            uchar resp = ERR_BAD_VERSION;
+            sendto_peer(connfd, CTYPE_REJECT, &resp, 1);
             close(connfd);
         }
         switch (msg[0])
@@ -175,16 +192,16 @@ void *handle_connection(void *params)
                 break;
            /* case CTYPE_VERACK: // TODO only send getblocks once per session?
                 //sendto_peer(connfd, CTYPE_ADDR,  // Send addresses TODO revamp above
-                unchar *body = malloc(CTYPE_GETBLOCKS_SIZE);
+                uchar *body = malloc(CTYPE_GETBLOCKS_SIZE);
                 // Start hash param
                 get_latest_block(body);
                 // Size param
-                unshort count = MAX_GETBLOCKS_COUNT;
+                ushort count = MAX_GETBLOCKS_COUNT;
                 body[SHA256_SIZE]   = count << 8 & 0xFF;
                 body[SHA256_SIZE+1] = count      & 0xFF;
                 sendto_peer(connfd, CTYPE_GETBLOCKS, body, SHA256_SIZE);
                 break;  */
-            case CTYPE_GETPEERS:
+            case CTYPE_GETNODES:
                 //TODO revamp above
                 break;
             case CTYPE_GETBLOCKS:
@@ -193,9 +210,9 @@ void *handle_connection(void *params)
             case CTYPE_MEMPOOL:
                 break;
             case CTYPE_INV:
-                if (msg[2] == DATATYPE_BLOCK)
+                if (msg[2] == DTYPE_BLOCK)
                 {
-                    // TODO
+                    // TODO if block we dont have, increment foreign blocks found
                 }
                         
                 break;
@@ -219,7 +236,7 @@ void *handle_connection(void *params)
 };
 
 // Threaded (once)
-void *server_listener(void *port)
+void *server_listener(void *net_info)
 {
     int sockfd;
     struct sockaddr_in servaddr,cliaddr;
@@ -227,32 +244,36 @@ void *server_listener(void *port)
     //pid_t     childpid; TODO unused
 
 
-    sockfd=socket(AF_INET,SOCK_STREAM,0);
+    sockfd = socket(AF_INET,SOCK_STREAM,0);
     if (sockfd < 0)
         die("Server socket creation failed. ERRNO %d\n",errno);
 
-    bzero(&servaddr,sizeof(servaddr));
+    bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
-    servaddr.sin_port=htons(*(unint *)port);
-    if ( bind(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(((Net_info *)net_info)->server_port);
+    if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
         die("Server failed to bind to address/port. ERRNO %d\n",errno);
 
-    if ( listen(sockfd,1024) < 0)
+    if (listen(sockfd,1024) < 0)
         die("Server listen failed. ERRNO %d\n",errno);
+
+    
+    ((Net_info *)net_info)->server_active = 1;
 
     for(;;)
     {
         clilen=sizeof(cliaddr);
-        int connfd = accept(sockfd,(struct sockaddr *)&cliaddr,&clilen);
+        int connfd = accept(sockfd, (struct sockaddr *)&cliaddr, &clilen);
         if (connfd < 0)
             die("Server failed to accept a connection. ERRNO %d\n",errno);
-
+    
         pthread_t handler_thread;
 
         // Argument struct
         conn_thread_params params;
         params.connfd = connfd;
+        params.net_info = net_info;
         params.acting_server = 1;
 
         pthread_create(&handler_thread, NULL, handle_connection, &params);
@@ -261,7 +282,7 @@ void *server_listener(void *port)
 }
 
 
-int start_client_conn(char *addr, unint port)
+int start_client_conn(char *addr, uint port, Net_info *net_info)
 {
     int connfd,n;
     struct sockaddr_in servaddr,ddcliaddr;
@@ -291,6 +312,7 @@ int start_client_conn(char *addr, unint port)
     // Argument struct
     conn_thread_params params;
     params.connfd = connfd;
+    params.net_info = net_info;
     params.acting_server = 0;
 
     pthread_create(&conn_thread, NULL, handle_connection, &params);
@@ -299,17 +321,16 @@ int start_client_conn(char *addr, unint port)
 }
 
 ///// Misc /////
-void sendto_peer(int connfd, char CTYPE, char *msg, unint msg_length)
+void sendto_peer(int connfd, char CTYPE, uchar *msg, uint msg_length)
 {
-    //TODO version bytes (2)
-    // Create raw msg by appending CTYPE byte
-    unchar *raw_msg = malloc(msg_length + 1)
-    raw_msg[0] = __version << 8 & 0xFF;
-    raw_msg[1] = __version      & 0xFF;
+    // Create raw msg by appending version and CTYPE bytes
+    uchar *raw_msg = malloc(msg_length + 3);
+    raw_msg[0] = __VERSION << 8 & 0xFF;
+    raw_msg[1] = __VERSION      & 0xFF;
     raw_msg[2] = CTYPE;
     if (msg_length > 0)
-        memcpy(&raw_msg[1], msg);
-    if ( sendto(connfd, *raw_msg, (msg_length + 1), 0, NULL, 0) < 0)
+        memcpy(&raw_msg[1], msg, msg_length);
+    if ( sendto(connfd, raw_msg, (msg_length + 1), 0, NULL, 0) < 0)
         die("Send to peer failed. ERRNO %d\n", errno); //TODO don't die because of this
     free(raw_msg);
 }
