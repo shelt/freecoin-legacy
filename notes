@@ -22,3 +22,11 @@ be sure to queue_die the network queues
 
 
 mempool must contain transaction hashes as well as entire transactions
+
+
+
+TODO README
+get means retrieve
+set means write
+compute means compute and retrieve
+update means compute and write

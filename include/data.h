@@ -9,7 +9,6 @@ typedef struct
 
 
 // Mutexes
-pthread_mutex_t mutex_blocklist = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_mempool = PTHREAD_MUTEX_INITIALIZER;
 
 

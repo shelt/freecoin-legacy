@@ -142,13 +142,19 @@ uint block_get_tx_count(uchar *block)
             block[POS_BLOCK_TX_COUNT+3];
 }
 
-uint block_get_size(uchar *block)
+void block_get_tx(uint index, uchar *dest)
+{
+    die("todo block_get_index");
+    //TODO
+}
+
+uint block_compute_size(uchar *block)
 {
     uchar tx_count = block_get_tx_count(block);
     uint cursor = SIZE_BLOCK_HEADER; // Index of first byte of a current transaction
 
     for(int i=0; i<tx_count; i++)
-        cursor += tx_get_size(&block[cursor]);
+        cursor += tx_compute_size(&block[cursor]);
     
     return cursor;
 }
