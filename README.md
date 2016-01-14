@@ -382,5 +382,6 @@ TODO
 
 
 ### Misc
+* Clean up header files
 * The first 64B chunk of every hash need not be calculated on each iteration.
 * make all functions that copy data to a ptr also return the ptr
