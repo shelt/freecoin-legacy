@@ -282,42 +282,46 @@ For `(0 <= n < 8)`:
 - If we are connected to less than 8 peers:
   - TODO
 
-<TX>
-  - If we don't have the transaction hash in our mempool:
-    - If the transaction is double-spending from the mempool or the blockchain
-    - If the transaction is valid
+#### Recieving a `<getdata>`
+- TODO
 
+#### Recieving a `<block>`
+- If the block height compared to our blockchain height is:
+  - **Less than or equal to:**
+    - Save the block to limbo.
+    - If there is now a complete chain in limbo with a height greater than our current blockchain height:
+      - Check that each block is valid. If any aren't:
+        - Drop and block the peer that sent it.
+      - Otherwise, swap the limbo chain with the appropriate end part of our blockchain.
+  - **1 greater than:**
+    - If the `prev_blockhash` is the different from the latest block in our chain:
+      - Save the block to limbo.
+      - send a `<getblock>` for the prev_blockhash block.
+    - Otherwise, check if this block is valid. If it isn't:
+        - Drop and block the peer that sent it.
+    - Otherwise, add this block to our blockchain.
+  - **2 or more greater than:**
+    - send a `<getblock>` for the prev_blockhash block.
 
-Reply with a `<reject>` containing `ERR_BLOCK_CONFLICT` and the hash of our latest block in our blockchain.
+#### Recieving a `<tx>`
+- If we don't have the transaction hash in our mempool:
+  - If the transaction is double-spending from the mempool or the blockchain
+  - If the transaction is valid
 
-<BLOCK>
-    - If the block height compared to our blockchain height is:
-      - **Less than or equal to:**
-        - Save the block to limbo.
-        - If there is now a complete chain in limbo with a height greater than our current blockchain height:
-          - Check that each block is valid. If any aren't:
-            - Drop and block the peer that sent it.
-          - Otherwise, swap the limbo chain with the appropriate end part of our blockchain.
-      - **1 greater than:**
-        - If the `prev_blockhash` is the different from the latest block in our chain:
-          - Save the block to limbo.
-          - send a `<getblock>` for the prev_blockhash block.
-        - Otherwise, check if this block is valid. If it isn't:
-            - Drop and block the peer that sent it.
-        - Otherwise, add this block to our blockchain.
-      - **2 or more greater than:**
-        - send a `<getblock>` for the prev_blockhash block.
-        
-    - Otherwise, if we don't have the prev_block mentioned by the block:
-      - Send a `<getdata>` for it.
-      - Save block to limbo.
-    - Otherwise, if we don't have the 2016th block previous to this block
+#### Recieving an `<alert>`
+- TODO
 
-#### Periodically
-- Send an `<inv>` of your latest block.
-- Send an `<inv>` of your peers.
+#### Recieving a `<ping>`
+- Reply with `<pong>`
+
+#### Recieving a `<pong>`
+- Inform user
 
 ### Misc procedures
+
+#### Do periodically:
+- Send an `<inv>` of your latest block.
+- Send an `<inv>` of your peers.
 
 #### Validating a block
 - Applying the SHA256 hash function to the block's header (first `SIZE_BLOCK_HEADER` bytes) must result in a value less than or equal to the expanded form of `target`.
