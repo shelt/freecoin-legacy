@@ -1,0 +1,24 @@
+network thread should not modify fs blockchain
+only tx queue and block queue
+modify these queues on forked threads to prevent holding up a connection handler (if we are waiting for a mutex to unlock, for example)
+
+main thread should read from these queues
+use the transaction queue if mining
+add any blocks from the queue to fs blockchain if they have the correct prev_hash
+
+because of this, latest_block need not be stored in net_info TODO
+
+
+TODO mutex lock tx_pool, block_pool, latest_block_hash accesses
+TODO mutex lock specific fs activities
+
+we know how to lookup blocks by height.
+we know how we can index blocks by hash.
+how can we index blocks AND TRANSACTIONS for fast lookup by hash?
+
+
+
+be sure to queue_die the network queues
+
+
+mempool must contain transaction hashes as well as entire transactions
