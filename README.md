@@ -285,21 +285,20 @@ For `(0 <= n < 8)`:
 
 #### Recieving a `<block>`
 - If the block height compared to our blockchain height is:
-  - **Less than or equal to:**
+  - **Less than or equal to, or 2 or more greater than:**
     - Save the block to limbo.
-    - If there is now a complete chain in limbo with a height greater than our current blockchain height:
-      - Check that each block is valid. If any aren't:
-        - Drop and block the peer that sent it.
-      - Otherwise, swap the limbo chain with the appropriate end part of our blockchain.
   - **1 greater than:**
     - If the `prev_blockhash` is the different from the latest block in our chain:
       - Save the block to limbo.
-      - send a `<getblock>` for the prev_blockhash block.
     - Otherwise, check if this block is valid. If it isn't:
         - Drop and block the peer that sent it.
     - Otherwise, add this block to our blockchain.
-  - **2 or more greater than:**
-    - send a `<getblock>` for the prev_blockhash block.
+- For each block in limbo with a height greater than our current blockchain height:
+  - If that block can be traced back (through `prev_hash`s) to a block in our blockchain:
+    - If each block in that limbo chain is valid:
+      - Swap the limbo chain with our current blockchain at the point of similarity (this is called a **revert**). The unused blocks should now be in limbo.
+    - Otherwise, drop and block the peer that sent it. Optionally, send a error-specific `<reject>` message.
+  - Otherwise, send a `<getblock>` for the referenced yet missing block.
 
 #### Recieving a `<tx>`
 - If we don't have the transaction hash in our mempool:
@@ -388,6 +387,11 @@ Freecoin currently uses Berkeley DB for data storage.
 
 
 ## Todo
+
+### Questions
+> Blockchain transactions need to be indexed to validate blocks and transactions. Should transactions in blocks in limbo also be indexed?
+
+**A: ** No. We only need to index transactions to determine if they should be added to our workblock. If our workblock is included in the blockchain, the limbo blocks are not relevant. Similarily, if the limbo blocks end up being used in the blockchain, our workblock is not relevant.
 
 ### Roadmap
 * How do we store blocks on the filesystem?
