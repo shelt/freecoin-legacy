@@ -22,8 +22,6 @@ With banks that deal with regular currencies, all regulation happens in one plac
 ### Message content types
 > Messages can be of fixed or variable size. If they are the latter, some fixed part of their content specifies the size of the following content. All messages have an additional 3 bytes at the beginning specifying their client version and their content type.
 
-**NOTE: Many of these numbers are incorrect and need to be changed.**
-
 | Name | reject |
 | ---- | ---- |
 | Value    | 0  |
