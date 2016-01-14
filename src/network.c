@@ -21,7 +21,7 @@
 #define MAX_LINE_SIZE 1024
 #define MAX_PEERS_FILE_LENGTH 1000
 
-int initial_peer_fromfile(peer_info_t *peers, Net_info *net_info)
+/*int initial_peer_fromfile(peer_info_t *peers, Net_info *net_info)
 {
     // Nodes from file
     peer_info_t *nodes_fromfile = malloc(sizeof(peer_info_t)*MAX_PEERS_FILE_LENGTH);
@@ -81,12 +81,14 @@ int initial_peer_fromfile(peer_info_t *peers, Net_info *net_info)
 
     return retval;
 };
+*/
 
 //TODO deal with these
 void webify(peer_info_t *peers, uint *peers_count);
 void *server_listener(void *net_info);
 void sendto_peer(int connfd, char CTYPE, uchar *msg, uint msg_length);
 
+//todo now inits and returns mempool TODO
 Net_info *join_network()
 {
     Net_info *net_info = malloc(sizeof(Net_info));
@@ -98,7 +100,7 @@ Net_info *join_network()
     peer_info_t *peers = malloc(sizeof(peers)*50);
     uint peers_count = 0;
 
-    int success = initial_peer_fromfile(peers, net_info);
+    int success = initial_peer_fromfile(peers, net_info); //TODO should be using DB
     if (success)
         peers_count++;
     else

@@ -1,6 +1,6 @@
 # freecoin
 
-**freecoin** is a fully-functional cryptocurrency I'm making for fun.
+**freecoin** is a fully-functional cryptocurrency I'm making for fun. Unlike most  cryptocurrencies which followed Bitcoin (litecoin, dogecoin), freecoin uses no Bitcoin source code.
 
 ## Background
 
@@ -101,7 +101,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | Purpose  | Verify connectivity of self to peer. Solicited by ping. |
 | Content  | N/A  |
 
-### Error constants
+### Errors
 
 See the `<reject>` message specification for full size of error messages.
 
@@ -317,6 +317,10 @@ For `(0 <= n < 8)`:
 #### Recieving a `<pong>`
 - Inform user
 
+
+
+
+
 ### Misc procedures
 
 #### Do periodically:
@@ -359,8 +363,18 @@ For `(0 <= n < 8)`:
 #### Upon finding a valid block
 TODO
 
-## Block and transaction storage
-TODO
+
+
+
+
+## Source information
+
+### Data storage
+Freecoin currently uses Berkeley DB for data storage.
+* `blockhash:blockdata`
+  *`txhash`:`blockdata` (secondary)
+* `node`:TODO
+
 
 
 ## Source guidelines

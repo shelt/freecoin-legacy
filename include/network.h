@@ -4,24 +4,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "queue.h"
-// TODO fix
-// Externs
-//extern unchar **mempool;
-//extern pthread_mutex_t mempool_mtx;
-
-//extern unchar *latest_block;
-//extern pthread_mutex_t latest_block_mtx;
-
-//extern unchar *
-//extern pthread_mutex_t mempool_mtx;
 
 typedef struct
 {
     uint server_port;         // set by network thread
     uint server_active;       // set by network thread
-    Queue *tx_pool;           // modified by network thread
-    Queue *block_pool;        // modified by network thread
-    uchar *latest_block_hash; // only modified by main thread
 } Net_info;
 typedef struct
 {

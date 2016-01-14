@@ -78,9 +78,13 @@ int main(int argc, char **argv)
     printf("Preparing to begin mining...\n");
 
     printf("Establishing self on network...\n");
-    Net_info *net_info = join_network(); //TODO create Net_info, contains pool queue   TODO misc is_coinbase_tx or something
-
-    netall_getblocks(net_info->latest_block_hash, MAX_GETBLOCKS);
+    Mempool mempool = join_network(); //  TODO misc is_coinbase_tx or something
+    
+    uchar *latest_block_hash = malloc(SHA256);
+    uint latest_block_height;
+    
+    data_get_latest_block_hash(latest_block_hash);
+    netall_getblocks(latest_block_hash, MAX_GETBLOCKS);
     netall_mempool();
     
 
@@ -89,26 +93,22 @@ int main(int argc, char **argv)
 
     // Used to store dequeued recieved transactions
     uchar *tx_buffer = malloc(MAX_TX_SIZE);
-    // Used to store dequeued recieved blocks
-    uchar *block_buffer = malloc(MAX_BLOCK_SIZE);
+    uchar *latest_block_hash_buffer = malloc(MAX_BLOCK_SIZE);
 
     uint curr_foreign_blocks_found;
     uchar target;
     while(1)
     {
         printf("Starting a new block...\n");
+        
+        data_get_latest_block_hash(latest_block_hash);
 
-        Block_header latest_block = get_block_header(net_info->latest_block_hash);
-
-        //block_init(__VERSION, get_curr_time(), height, net_info->latest_block_hash, target, workblock);
         void block_init(__VERSION,
                         get_curr_time(),
-                        latest_block.height,
-                        net_info->latest_block_hash,
-                        get_next_target(net_info->latest_block_hash),
-                        workblock;   
-
-
+                        get_block_header(latest_block_hash).height,
+                        latest_block_hash,
+                        get_next_target(latest_block_hash),
+                        workblock;
 
         // Coinbase transaction
         uchar *coinbase_tx = malloc(SIZE_TX_HEADER + SIZE_TX_OUTPUT);
@@ -116,26 +116,27 @@ int main(int argc, char **argv)
         gen_tx_output(miner_addr, MINING_REWARD, &coinbase_tx[SIZE_TX_HEADER]);
         block_add_tx(workblock, coinbase_tx);
         free(coinbase_tx);
-
-        // Fee transaction
-        //TODO
+        
+        block_update_root(workblock)
         
         while(1)
         {
-            if (net_info->block_pool->size > 0) // ASSUMED TO BE VALID BLOCK
-                // New valid block(s) recieved on network TODO own function
-                attempt_blocks_add(net_info->block_pool);
+            data_get_latest_block_hash(latest_block_hash_buffer)
+            if (memcmp(latest_block_hash_buffer, latest_block_hash, SIZE_SHA256) != 0) // TODO not very fast
                 break;
-            if (net_info->tx_pool->size > 0)
+            else //if (data_mempool_get_size(mempool) != (block_get_tx_count(workblock) - 1))
             {
-                do
+                int diff = data_mempool_get_size(mempool) - (block_get_tx_count(workblock) - 1);
+                for(int i=0; i<diff; i++)
                 {
-                    queue_dequeue(net_info->tx_pool, tx_buffer);
+                    data_mempool_get(mempool, i, tx_buffer);
                     block_add_tx(workblock, tx_buffer);
-                } while (net_info->tx_pool->size > 0)
-                block_update_root(workblock);
+                }
+                if (diff > 0)
+                    block_update_root(workblock);
             }
-            block_set_time(workblock, get_curr_time());
+            
+            block_set_time(workblock, get_curr_time()); // We could also modify the coinbase output based on surplus of txs
             mine(workblock, target, 10000);
         }
     }
