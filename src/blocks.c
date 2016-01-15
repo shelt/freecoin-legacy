@@ -144,7 +144,7 @@ uint block_get_tx_count(uchar *block)
 
 void block_get_tx(uint index, uchar *dest)
 {
-    die("todo block_get_index");
+    die("todo block_get_tx");
     //TODO
 }
 

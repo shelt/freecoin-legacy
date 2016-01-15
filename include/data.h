@@ -3,7 +3,13 @@
 
 typedef struct
 {
-    uchar **txs;
+    uchar *hash;
+    uchar *data;
+} Mempool_tx;
+
+typedef struct
+{
+    Mempool-tx *txs;
     uint count;
 } Mempool;
 
