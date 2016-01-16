@@ -1,3 +1,5 @@
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
 I_DIR = include
 L_DIR = lib
 O_DIR = build
@@ -8,9 +10,15 @@ BIN_PREFIX=freecoin-
 CC=gcc
 CFLAGS=-Wall -std=c99 -lpthread -I$(I_DIR) -Wno-unused-variable
 
+BDB_FLAGS=--includedir=$(ROOT_DIR)/$(I_DIR) --libdir=$(ROOT_DIR)/$(O_DIR)
+
+$(info $(BDB_FLAGS))
+
+$(exit)
+
 
 default: all
-all: clean init mine testing
+all: init mine testing
 
 # See "Secondary Expansion"
 .SECONDEXPANSION:
@@ -30,6 +38,8 @@ $(O_DIR)/%.o: $(S_DIR)/%.c
 $(TARGETS): $(addprefix $(O_DIR)/, $(addsuffix .o, $(basename $(shell cd $(S_DIR) && find $@ -name '*.c'))))
 	$(CC) $^ -o $(B_DIR)/$(BIN_PREFIX)$@ $(CFLAGS)
 
+bdb:
+	-cd $(L_DIR)/bdb/build_unix && ../dist/configure $(BDB_FLAGS) && make && sudo make install
 
 .PHONY: clean
 init:

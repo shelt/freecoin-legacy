@@ -30,3 +30,7 @@ get means retrieve
 set means write
 compute means compute and retrieve
 update means compute and write
+
+
+
+m_ prefix means this function allocates memory that is returned in some way, or deallocates memory that was previously allocated by a sister m_ function.
