@@ -114,15 +114,15 @@ void block_update_root(uchar *block)
     compute_merkle_root(&block[SIZE_BLOCK_HEADER], block_get_tx_count(block), &block[POS_BLOCK_MERKLE_ROOT]);
 }
 
-void block_add_tx(uchar *block, uchar *tx)
+void block_add_tx(uchar *block, Tx *tx)
 {
-    uint size = block_get_size(block);
-    if (size >= MAX_BLOCK_SIZE)
+    uint block_size = block_get_size(block);
+    if ((block_size + tx->size) >= MAX_BLOCK_SIZE)
     {
         printfv(VERBOSE, "Warning: Transaction could not be added, block too large");
         return;
     }
-    memcpy(&block[size], tx, tx_get_size(tx));
+    memcpy(&block[size], tx->data, tx->size);
     
 
     // Increment tx count
@@ -132,14 +132,17 @@ void block_add_tx(uchar *block, uchar *tx)
     block[POS_BLOCK_TX_COUNT+1] = (tx_count >> 16)   & 0xFF;
     block[POS_BLOCK_TX_COUNT+2] = (tx_count >> 8)    & 0xFF;
     block[POS_BLOCK_TX_COUNT+3] =  tx_count          & 0xFF;
+
+    // Update root
+    block_update_root(block);
 }
 
-uint block_get_tx_count(uchar *block)
+uint block_get_uint(uchar *block, uint pos)
 {
-    return (block[POS_BLOCK_TX_COUNT  ] << 24) |
-           (block[POS_BLOCK_TX_COUNT+1] << 16) |
-           (block[POS_BLOCK_TX_COUNT+2] << 8)  |
-            block[POS_BLOCK_TX_COUNT+3];
+    return (block[pos  ] << 24) |
+           (block[pos+1] << 16) |
+           (block[pos+2] << 8)  |
+            block[pos+3];
 }
 
 void block_get_tx(uint index, uchar *dest)

@@ -1,14 +1,8 @@
-
-
-typedef struct
-{
-    DB *blocks;
-    DB *chain;
-    DB *limbo;
-    DB *txs;
-    DB *nodes;
-} Dbs;
-
+/* data.c
+    Contains functions which directly modify databases using
+    DBTs. Also contains functions which perform complex database
+    operations using other functions in this file.
+*/
 
 //////// Database commission functions (internal) //////////
 
@@ -43,9 +37,11 @@ int db_get(DB *db, DBT *key, DBT *dat)
     return db->get(db, NULL, key, dat, 0);
 }
 
-void db_init(DB *db, static const char *path)
+Db m_db_init(static const char *path)
 {
+    Db *db = malloc(sizeof(Db));
     int ret;
+    
     ret = db_create(db, NULL, 0);
     if (ret != 0)
         die("Failed to create database handler: %s", path);
@@ -59,10 +55,19 @@ void db_init(DB *db, static const char *path)
     if (ret != 0)
         die("Failed to open database: %s", path);
 }
+void m_db_die(Db *db)
+{
+    if (db != NULL)
+    {
+        db->close(db, 0);
+        free(db);
+        db = NULL;
+    }
+}
 
 /////////////////////////////////////////////////////////////
 
-int dbs_validate(dbs)
+int dbs_validate(Dbs *dbs)
 {
     die("todo dbs_validate");
     // chain has no gaps
@@ -71,8 +76,10 @@ int dbs_validate(dbs)
     // all txs are found in specified block heights
 }
 
-void dbs_init(Dbs *dbs, int mempool)
+Dbs *m_dbs_init()
 {
+    Dbs *dbs = malloc(sizeof(Dbs));
+
     struct stat st = {0};
     if (stat(PATH_DATA_DIR, &st) == -1)
         mkdir(PATH_DATA_DIR, 0700);
@@ -83,43 +90,40 @@ void dbs_init(Dbs *dbs, int mempool)
     db_init(dbs->txs, PATH_DATA_TXS);
     db_init(dbs->nodes, PATH_DATA_NODES);
 
-    if (!mempool)
-    {
-        dbs->mempool = NULL;
-    }
-    else
-    {
-        die("Todo init mempool"); //TODO
-    }
+    dbs->mempool = malloc(sizeof(Mempool));
+    dbs->mempool->mutex = PTHREAD_MUTEX_INITIALIZER;
+    dbs->mempool->count = 0;
+    dbs->mempool->txs = malloc(sizeof(Tx *) * TX_COUNT_SOFT_LIMIT);
+
+    return dbs;
 }
 
 void dbs_die(Dbs *dbs)
 {
-    if (dbs->blocks != NULL)
-        dbs->blocks->close(dbs->blocks, 0);
-    
-    if (dbs->chain != NULL)
-        dbs->chain->close(dbs->chain, 0);
-    
-    if (dbs->limbo != NULL)
-        dbs->limbo->close(dbs->limbo, 0);
-    
-    if (dbs->txs != NULL)
-        dbs->txs->close(dbs->txs, 0); 
-    
-    if (dbs->nodes != NULL)
-        dbs->nodes->close(dbs->nodes, 0);
+    free(dbs->mempool->txs);
+    free(dbs->mempool);
 
-    //TODO clear mempool
+    m_db_die(dbs->blocks);
+    m_db_die(dbs->chain);
+    m_db_die(dbs->limbo);
+    m_db_die(dbs->txs);
+    m_db_die(dbs->nodes);
+
+    free(dbs);
+    dbs = NULL;
 }
 
-/*********************
-** SHARED FUNCTIONS **
-*********************/
+/**********************
+** COMPLEX FUNCTIONS **
+**********************/
+// Functions which don't *directly* modify one specific database.
+// These functions perform more complex operations than others in
+// this file.
 
-// - remove tx db references
+// - Remove tx db references
 // - swap with limbo
 // - update chain db
+// -date tx db references
 void data_blocks_revert(Dbs *dbs, uchar *common_block_hash, uchar *new_latest_block_hash)
 {
     uint initial_height = data_chain_get_height(dbs);
@@ -206,7 +210,6 @@ void data_blocks_revert(Dbs *dbs, uchar *common_block_hash, uchar *new_latest_bl
 /*****************************
 ** BLOCK-SPECIFIC FUNCTIONS **
 *****************************/
-
 void data_blocks_add(Dbs *dbs, uchar *block)
 {
     // Block data
@@ -318,8 +321,59 @@ uint data_chain_get_height(Dbs *dbs)
 }
 
 
-//mutex_mempool TODO
-uint data_mempool_get_size(Dbs *dbs);
-int data_mempool_get(Dbs *dbs, uint index, uchar *dest);
-int data_mempool_add(Dbs *dbs, uchar *data);
-int data_mempool_del(Dbs *dbs, uchar *hash);
+/**********************
+** MEMPOOL FUNCTIONS **
+**********************/
+uint data_mempool_get_size(Dbs *dbs)
+{
+    pthread_mutex_lock(dbs->mempool->mutex);
+    
+    return dbs->mempool->count;
+    
+    pthread_mutex_unlock(dbs->mempool->mutex);
+}
+
+Tx *data_mempool_get(Dbs *dbs, uint index, uchar *dest)
+{
+    pthread_mutex_lock(dbs->mempool->mutex);
+    
+    if (index >= dbs->mempool->count)
+        return NULL;
+
+    Tx *retval = dbs->mempool->txs[i];
+    
+    pthread_mutex_unlock(dbs->mempool->mutex);
+    return retval;
+}
+
+void data_mempool_add(Dbs *dbs, Tx *tx)
+{
+    pthread_mutex_lock(dbs->mempool->mutex);
+    
+    dbs->mempool->txs[dbs->mempool->count] = tx;
+    dbs->mempool->count++;
+
+    pthread_mutex_unlock(dbs->mempool->mutex);
+}
+
+Tx *data_mempool_del(Dbs *dbs, uchar *hash)
+{
+    pthread_mutex_lock(dbs->mempool->mutex);
+
+    Tx *retval = NULL;
+    uint size = dbs->mempool->size;
+    for (int i=0; i<size; i++)
+    {
+        if (memcmp(hash, dbs->mempool->txs[i], SIZE_SHA256) == 0)
+        {
+            retval = dbs->mempool->txs[i];
+            dbs->mempool->size--;
+            if (dbs->mempool->size > 0)
+                dbs->mempool->txs[i] = dbs->mempool->txs[size];
+            
+            dbs->mempool->txs[size] = NULL;
+        }
+    }
+    pthread_mutex_unlock(dbs->mempool->mutex);
+    return retval;
+}
