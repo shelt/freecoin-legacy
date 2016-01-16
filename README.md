@@ -25,7 +25,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | Name | reject |
 | ---- | ---- |
 | Value    | 0  |
-| Size     | `1B + 2B + (<=256B) (ERRORTYPE + info_size + info)`  |
+| Size     | `1B + 1B + (<=255B) (ERRORTYPE + info_size + info)`  |
 | Purpose  | Tell a peer that a block/tx/time/alert/version is invalid. Sent in response to various messages.  |
 | Content  | ERRORTYPE byte and info about what specifically is invalid.    |
 
