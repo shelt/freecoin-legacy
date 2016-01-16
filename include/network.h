@@ -7,6 +7,23 @@
 
 typedef struct
 {
+    uint port;
+    uint addr_len;
+    char addr[MAX_ADDR_LENGTH];
+    int connfd;
+} Peer;
+
+typedef struct
+{
+    uint server_ready;
+    Peer **peers;
+    uint peers_count;
+} Network;
+
+
+
+/*typedef struct
+{
     uint server_port;         // set by network thread
     uint server_active;       // set by network thread
 } Net_info;
@@ -24,7 +41,7 @@ typedef struct
     uint port;
     uint invalid;
     int connfd;
-} peer_info_t;
+} peer_info_t;*/
 
 Net_info *join_network();
 

@@ -18,8 +18,15 @@
 #define ushort uint16_t
 
 // 1024*1024
+//TODO check for overvlow on all 4 of these limits
 #define MAX_BLOCK_SIZE 1048576
 #define MAX_TX_SIZE 1048576
+#define MAX_ADDR_LENGTH 80
+#define MAX_CONNECTED_PEERS 10
+
+// For the mempool. It likely won't contain more than this.
+// TODO check for overflow on this limit
+#define TX_COUNT_SOFT_LIMIT 500
 
 
 /* CRYPTO SPECIFICATIONS */
@@ -43,4 +50,10 @@
 #define SECONDS_IN_HALF_WEEK 5040
 #define SECONDS_IN_8_WEEKS 80640
 
+
+/* db.h typedefs */
+#define u_long unsigned long
+#define u_int unsigned int
+#define u_short unsigned short
+#define u_char unsigned char
 #endif

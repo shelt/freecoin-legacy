@@ -34,15 +34,25 @@
 #define SIZE_TX_OUTPUT_OUT_ADDRESS 32
 #define SIZE_TX_OUTPUT_AMOUNT 4
 
+typedef struct
+{
+    uchar *hash;
+    uint size;
+    uchar *data;
+} Tx;
 
 
-void gen_tx(ushort in_count, ushort out_count, uint lock_time, // Header variables
-            uchar **ins, uchar **outs, uchar *tx);
+Tx *m_tx_gen(ushort in_count,
+             ushort out_count,
+             uint lock_time,
+             // body
+             uchar **ins,
+             uchar **outs);
 
 void gen_tx_input(uchar *ref_tx, uint out_index, uchar *pubkey, uchar *sig, uchar *tx_input);
 
 void gen_tx_output(uchar *out_address, uint amount, uchar *tx_output);
 
-ushort tx_get_size(uchar *tx);
+ushort tx_raw_get_size(uchar *tx);
 
 #endif
