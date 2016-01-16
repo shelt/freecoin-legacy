@@ -1,30 +1,34 @@
 #include <stdio.h>
-
 #include "printing.h"
-
 #include "string.h"
 #include "blocks.h"
 #include "util.h"
 #include "bignum.h"
+#include "shared.h"
+#include "data.h"
 
+/* blockchain.c
+    Contains utility functions dealing with the blockchain
+    such as validation, target computation, etc.
+*/
 
-uchar MAX_TARGET[32] = { 0xff, 0xff, 0xff, 0xff,
-                         0xff, 0xff, 0xff, 0xff,
-                         0xff, 0xff, 0xff, 0xff,
-                         0xff, 0xff, 0xff, 0xff,
-                         0xff, 0xff, 0xff, 0xff,
-                         0xff, 0xff, 0xff, 0xff,
-                         0xff, 0xff, 0xff, 0xff,
-                         0xff, 0xff, 0xff, 0xff };
 
 
 /***************
 ** VALIDATION **
 ****************/
 
-uint is_valid_blockhash(uchar *hash, uchar target)
+int is_valid_blockhash(uchar *hash, uchar target)
 {
-    die("todo is_valid_blockhash");
+    int retval;
+    
+    uchar *etarget = malloc(SIZE_SHA256);
+    target_to_etarget(target, etarget);
+
+    retval = big_compare(hash, etarget, SIZE_SHA256) <= 0;
+
+    free(etarget);
+    return retval;
 }
 
 // TODO misc is_coinbase_tx ?
@@ -34,26 +38,37 @@ uint is_valid_blockhash(uchar *hash, uchar target)
 ** MISCELLANEOUS **
 *******************/
 
-uint compute_next_target(uchar *block_hash)
+uint compute_next_target(Dbs *dbs, uchar *block_hash)
 {
     uint retval;
-    Block_header block = get_block_header(block_hash); //TODO update with new db method, needs to accept dbs (should it be in data.c?)
+    
+    // Get block
+    uchar *block = malloc(SIZE_BLOCK_HEADER);
+    data_blocks_get_header(dbs, block_hash, block);
 
-    uint block_time = block_get_time(block);
-    uint block_height = block_get_height(block);
-    uint block_get_target = block_get_target(block);
+    // Get block info
+    uint block_time = block_get_uint(block, POS_BLOCK_TIME);
+    uint block_height = block_get_uint(block, POS_BLOCK_HEIGHT);
+    uint block_target = block_get_uint(block, POS_BLOCK_TARGET);
 
     // Note that the current time is used only for testnet purposes and this function is
     // otherwise time-independent.
     uint curr_time = get_curr_time();
     if (curr_time < TESTNET_EPOCH && ((curr_time - block_time) >= SECONDS_IN_20_MINUTES))
         retval = 0;
-    else if (block_height > 0 && (block_height % RECALC_TARGET_INTERVAL) == 0)
+    else if ((block_height > 0) && (block_height % RECALC_TARGET_INTERVAL) == 0)
     {
         uchar *recalc_block_hash = malloc(SIZE_SHA256);
-        inv_block_of_height((block_height - RECALC_TARGET_INTERVAL), recalc_block_hash);
+        data_chain_get(dbs, (block_height - RECALC_TARGET_INTERVAL), recalc_block_hash);
 
-        uint diff = block_time - get_block_header(recalc_block_hash).time;
+        // Get recalc_block
+        uchar *recalc_block = malloc(SIZE_BLOCK_HEADER);
+        data_blocks_get_header(dbs, recalc_block_hash, recalc_block);
+
+        // Get recalc_block info
+        uint recalc_block_time = block_get_uint(recalc_block, POS_BLOCK_TIME);
+
+        uint diff = block_time - recalc_block_time;
         
         // upper bound
         if (diff > SECONDS_IN_8_WEEKS)
@@ -62,7 +77,7 @@ uint compute_next_target(uchar *block_hash)
         else if (diff < (SECONDS_IN_HALF_WEEK))
             diff = SECONDS_IN_HALF_WEEK;
 
-        // target computation
+        // Actual target computation
         uchar *etarget = malloc(SIZE_SHA256);
         target_to_etarget(block_target, etarget);
 
@@ -77,12 +92,15 @@ uint compute_next_target(uchar *block_hash)
         
         big_mult(etarget, SIZE_SHA256, big_diff, SIZE_SHA256, buffer1);
         big_div(buffer1, divisor, buffer2);
-        if (big_compare(buffer2, MAX_TARGET, SIZE_SHA256) > 0)
-            retval = etarget_to_target(MAX_TARGET);
+        
+        memset(buffer1, 0xff, SIZE_SHA256);
+        if (big_compare(buffer2, buffer1, SIZE_SHA256) > 0)
+            retval = etarget_to_target(buffer1);
         else
             retval = etarget_to_target(buffer2);
 
         free(recalc_block_hash);
+        free(recalc_block);
         free(etarget);
         free(big_diff);
         free(buffer1);
@@ -92,5 +110,9 @@ uint compute_next_target(uchar *block_hash)
     {
         retval = block_target;
     }
+    free(block);
+
     return retval;
 }
+
+

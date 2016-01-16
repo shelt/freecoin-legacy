@@ -6,6 +6,7 @@
 
 #define POS_BLOCK_VERSION 0
 #define POS_BLOCK_TIME 2
+#define POS_BLOCK_HEIGHT 6
 #define POS_BLOCK_PREV_HASH 10
 #define POS_BLOCK_MERKLE_ROOT 42
 #define POS_BLOCK_TARGET 74
@@ -37,8 +38,7 @@ void block_inc_nonce(uchar *block);
 
 void block_update_root(uchar *block);
 
-uint block_get_size(uchar *block);
-uint block_get_tx_count(uchar *block);
+uint block_get_uint(uchar *block, uint pos);
 
 void block_add_tx(uchar *block, uchar *tx);
 
