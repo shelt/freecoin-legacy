@@ -88,56 +88,47 @@ void webify(peer_info_t *peers, uint *peers_count);
 void *server_listener(void *net_info);
 void sendto_peer(int connfd, char CTYPE, uchar *msg, uint msg_length);
 
-//todo now inits and returns mempool TODO
-Net_info *join_network()
+void join_network(Dbs *dbs)
 {
-    Net_info *net_info = malloc(sizeof(Net_info));
-    net_info->server_active = 0;
-    net_info->pool = queue_init();
-    net_info->foreign_blocks_found = 0;
- 
-    // Peers AKA connected nodes
-    peer_info_t *peers = malloc(sizeof(peers)*50);
-    uint peers_count = 0;
+    Network *network = malloc(sizeof(Network));
+    Network->server_ready = 0;
+    Network->peers = malloc(sizeof(Peer) * MAX_CONNECTED_PEERS);
 
-    int success = initial_peer_fromfile(peers, net_info); //TODO should be using DB
-    if (success)
-        peers_count++;
-    else
-    // FROM INPUT
+    Dbs *dbs = m_dbs_init();
+
+    uint ret;
+    network->peers[0] = malloc(sizeof(Peer));
+    while (1)
     {
-        // Buffers
-        char addr[100];
-        uint port;
-        printf("Failed to connect to nodes from peerfile. \nEnter manually: \n");
-        while(1)
+        pthread_mutex_lock(network->mutex);
+        if (network->peers_count > 0)
+            break;
+        ret = data_peers_get_top(network->peers[0]);
+        if (ret != 0)
         {
-            scanf("%s %d", addr, &port);
-            int peerfd = start_client_conn(addr, port, net_info);
-            if (peerfd < 0)
-            {
-                addr[0] = '\0'; // Remove it
-                printf("Failed to connect to node. \nEnter another: \n");
-            }
-            else
-            {
-                peer_info_t peer;
-                strcpy(peer.addr, addr);
-                peer.port = port;
-                peers[0] = peer;
-                peers_count++;
-                break;
-            }
+            printf("Failed to find any working nodes. \n \
+                    Enter manually as \"<addr> <port>\": ");
+            scanf("%s %d", network->peers[0]->addr, &(network->peers[0]->port));
         }
+        start_client_conn(network->peers[0]);
+        if (network->peers[0]->connfd > 0)
+            network->peers_count++;
+        pthread_mutex_unlock(network->mutex);
     }
+    // Webification
+    sendto_peer(peers[*peers_count-1].connfd, CTYPE_GETNODES, 0, 0);
 
-    // Initiate client-server handshakes
-    webify(peers, &peers_count);
-    
+//TODO redone up to here
+
+
+
+
+////////// OLD // OLD // OLD // OLD // OLD // OLD // OLD // OLD // OLD  /////////////////
+
     // Create own server
     printf("Creating socket listener...\n");
     pthread_t server;
-    net_info->server_port = SERVER_PORT;
+    net_info->server_port = NET_SERVER_PORT;
     
     pthread_create(&server, NULL, server_listener, net_info);
     while(net_info->server_active != 1)
@@ -145,12 +136,7 @@ Net_info *join_network()
     return net_info;
 };
 
-void webify(peer_info_t *peers, uint *peers_count)
-{
-    if (peers_count == 0)
-        die("Webify: need initial peer");
-    sendto_peer(peers[*peers_count-1].connfd, CTYPE_GETNODES, 0, 0);
-};
+
 //TODO mutex peers and peers_count
 
 ///////////////////////
