@@ -115,25 +115,23 @@ void join_network(Dbs *dbs)
             network->peers_count++;
         pthread_mutex_unlock(network->mutex);
     }
-    // Webification
-    sendto_peer(peers[*peers_count-1].connfd, CTYPE_GETNODES, 0, 0);
+    sendto_peer(peers[0].connfd, CTYPE_GETNODES, 0, 0);
 
-//TODO redone up to here
+    printf("Creating socket listener...\n");
+
+}
+
 
 
 
 
 ////////// OLD // OLD // OLD // OLD // OLD // OLD // OLD // OLD // OLD  /////////////////
 
-    // Create own server
     printf("Creating socket listener...\n");
     pthread_t server;
-    net_info->server_port = NET_SERVER_PORT;
-    
-    pthread_create(&server, NULL, server_listener, net_info);
-    while(net_info->server_active != 1)
+    pthread_create(&server, NULL, server_listener, network);
+    while(network->server_ready != 1)
         sleep(2);
-    return net_info;
 };
 
 
@@ -148,12 +146,10 @@ void join_network(Dbs *dbs)
 ///// Initiation /////
 
 // Threaded (any amount)
-void *handle_connection(void *params)
+void *handle_connection(void *peer)
 {
     // Dereferenced stack variables
-    int connfd = ((conn_thread_params *)params)->connfd;
-    int acting_server = ((conn_thread_params *)params)->acting_server;
-    Net_info *net_info = ((conn_thread_params *)params)->net_info;
+    int connfd = ((Peer *)peer)->connfd;
 
     int n;
     uchar *msg = malloc(MAX_MSG_SIZE);
@@ -164,16 +160,16 @@ void *handle_connection(void *params)
             die("Peer has shutdown"); // TODO we shouldn't die because of this
         else if (n < 0)
             die("Error recieving from peer. ERRNO %d\n",errno);
-        //msg[n] = 0; not a string, TODO
         
         // Parsing
-        if (msg[1] != __VERSION)
+        if (bytes_to_ushort(msg[0]) != __VERSION)
         {
             uchar resp = ERR_BAD_VERSION;
             sendto_peer(connfd, CTYPE_REJECT, &resp, 1);
             close(connfd);
+            return;
         }
-        switch (msg[0])
+        switch (msg[2])
         {
             case CTYPE_REJECT:
                 printf("Recieved CTYPE_REJECT: %d",msg[1]); //TODO parse message
@@ -224,7 +220,7 @@ void *handle_connection(void *params)
 };
 
 // Threaded (once)
-void *server_listener(void *net_info)
+void *server_listener(void *network)
 {
     int sockfd;
     struct sockaddr_in servaddr,cliaddr;
@@ -239,7 +235,7 @@ void *server_listener(void *net_info)
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(((Net_info *)net_info)->server_port);
+    servaddr.sin_port = htons(NET_SERVER_PORT);
     if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
         die("Server failed to bind to address/port. ERRNO %d\n",errno);
 
@@ -309,6 +305,7 @@ int start_client_conn(char *addr, uint port, Net_info *net_info)
 }
 
 ///// Misc /////
+//TODO this should only be called from message functions
 void sendto_peer(int connfd, char CTYPE, uchar *msg, uint msg_length)
 {
     // Create raw msg by appending version and CTYPE bytes
@@ -323,6 +320,121 @@ void sendto_peer(int connfd, char CTYPE, uchar *msg, uint msg_length)
     free(raw_msg);
 }
 
-////////// Network action functions //////////
-//none
+////////// Network message functions //////////
 
+
+
+void msg_reject(int c, uchar error, uchar *about, uchar size)
+{
+    int msg_size = 1 + size;
+    uchar *msg = malloc(msg_size);
+    
+    msg[0] = error;
+    memcpy(&msg[1], about, size);
+    sendto_peer(c, CTYPE_REJECT, msg, msg_size);
+
+    free(msg);
+}
+
+void msg_getnodes(int c)
+{
+    sendto_peer(c, CTYPE_GETNODES, NULL, 0);
+}
+
+void msg_getblocks(int c, uchar *start_block, uchar count)
+{
+    int msg_size = SIZE_SHA256 + 1;
+    uchar *msg = malloc(msg_size);
+    
+    memcpy(msg, start_block, SIZE_SHA256);
+    msg[SIZE_SHA256] = count;
+    sendto_peer(c, CTYPE_GETBLOCKS, msg, msg_size);
+    
+    free(msg);
+}
+
+void msg_mempool(int c)
+{
+    sendto_peer(c, CTYPE_MEMPOOL, NULL, 0);
+}
+
+void msg_inv(int c, uchar type, uchar **ids, uchar count)
+{
+    int msg_size = 2 + (SIZE_SHA256 * count);
+    uchar *msg = malloc(msg_size);
+    msg[0] = type;
+    msg[1] = count;
+    int cursor = 2;
+    for(int i=0; i<count; i++)
+    {
+        memcpy(&msg[cursor], ids[i], SIZE_SHA256);
+        cursor += SIZE_SHA256;
+    }
+    sendto_peer(c, CTYPE_INV, msg, msg_size);
+
+    free(msg);
+}
+// Same as above
+void msg_getdata(int c, uchar type, uchar **ids, uchar count)
+{
+    int msg_size = 2 + (SIZE_SHA256 * count);
+    uchar *msg = malloc(msg_size);
+    msg[0] = type;
+    msg[1] = count;
+    int cursor = 2;
+    for(int i=0; i<count; i++)
+    {
+        memcpy(&msg[cursor], ids[i], SIZE_SHA256);
+        cursor += SIZE_SHA256;
+    }
+    sendto_peer(c, CTYPE_GETDATA, msg, msg_size);
+
+    free(msg);
+}
+
+void msg_block(int c, uchar *block, uint size)
+{
+    int msg_size = 4 + size;
+    uchar *msg = malloc(msg_size);
+    uint_to_bytes(size, msg[0]);
+    memcpy(&msg[4], block, size);
+    sendto_peer(c, CTYPE_BLOCK, msg, msg_size);
+    
+    free(msg);
+}
+// Same as above
+void msg_tx(int c, uchar *tx, uint size)
+{
+    int msg_size = 4 + size;
+    uchar *msg = malloc(msg_size);
+    uint_to_bytes(size, msg[0]);
+    memcpy(&msg[4], block, size);
+    sendto_peer(c, CTYPE_TX, msg, msg_size);
+    
+    free(msg);
+}
+
+void alert(int c, uchar type, uchar cmd, uint time, uchar *about, uchar about_len, uchar *sig)
+{
+    int msg_size = 7 + about_len + SIZE_RSA1024;
+    uchar *msg = malloc(msg_size);
+    msg[0] = type;
+    msg[1] = cmd;
+    uint_to_bytes(time, &msg[2]);
+    msg[6] = about_len;
+    memcpy(msg[7], about, about_len);
+    memcpy(msg[7 + about_len], sig, SIZE_RSA1024);
+    sendto_peer(c, CTYPE_ALERT, msg, msg_size);
+
+    free(msg);
+}
+
+void ping(int c)
+{
+    sendto_peer(c, CTYPE_PING, NULL, 0);
+}
+
+void pong(int c)
+{
+    sendto_peer(c, CTYPE_PONG, NULL, 0);
+}

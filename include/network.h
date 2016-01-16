@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include "queue.h"
 
-typedef struct
+typedef struct //TODO does this struct need to keep track of if its a server or client connection?
 {
     uint port;
     uint addr_len;
