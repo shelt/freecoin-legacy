@@ -47,7 +47,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | ---- | ---- |
 | Value    | 3  |
 | Size     | `1B + 1B + ?*256B (DATATYPE + data_ids_count + data_ids[])`  |
-| Purpose  | Tell a peer about blocks or txs that you have. Sent unsolicited or in response to getblocks, getpeers or mempool.  |
+| Purpose  | Tell a peer about blocks or txs that you have. Sent unsolicited or in response to getblocks or mempool.  |
 | Content  | List of tx or block hashes that you have in your mempool or blockchain, respectively; or list of peers you are connected to.  |
 
 | Name | getdata |
