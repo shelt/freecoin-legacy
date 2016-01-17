@@ -184,8 +184,10 @@ void *handle_connection(void *peer)
             case CTYPE_ALERT:
                 break;
             case CTYPE_PING:
+                    msg_pong(peer);
                 break;
-            case CTYPE_PONG:
+            case CTYPE_PONG: //TODO
+                    print("Received pong from peer %d", peer->connfd);
                 break;
         }
                 
@@ -445,7 +447,7 @@ void msg_peer(int c, Peer *peer)
     free(msg);    
 }
 
-void alert(int c, uchar type, uchar cmd, uint time, uchar *about, uchar about_len, uchar *sig)
+void msg_alert(int c, uchar type, uchar cmd, uint time, uchar *about, uchar about_len, uchar *sig)
 {
     int msg_size = 7 + about_len + SIZE_RSA1024;
     uchar *msg = malloc(msg_size);
@@ -460,12 +462,12 @@ void alert(int c, uchar type, uchar cmd, uint time, uchar *about, uchar about_le
     free(msg);
 }
 
-void ping(int c)
+void msg_ping(int c)
 {
     sendto_peer(c, CTYPE_PING, NULL, 0);
 }
 
-void pong(int c)
+void msg_pong(int c)
 {
     sendto_peer(c, CTYPE_PONG, NULL, 0);
 }
