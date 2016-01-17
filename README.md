@@ -25,64 +25,64 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | Name | reject |
 | ---- | ---- |
 | Value    | 0  |
-| Size     | `1B + 1B + (<=255B) (ERRORTYPE + info_size + info)`  |
+| Size     | `1B + 1B + [<=255B] (ERRORTYPE + info_size + info)`  |
 | Purpose  | Tell a peer that a block/tx/time/alert/version is invalid. Sent in response to various messages.  |
 | Content  | ERRORTYPE byte and info about what specifically is invalid.    |
 
-| Name | getnodes |
-| ---- | ---- |
-| Value    | 1  |
-| Size     | `0B`  |
-| Purpose  | Request an inv containing peers a server has from which you will connect to one. Sent unsolicited.  |
-| Content  | N/A  |
-
 | Name | getblocks |
 | ---- | ---- |
-| Value    | 2  |
+| Value    | 1  |
 | Size     | `256B + 1B (start_block + block_count)`  |
 | Purpose  | Request an inv containing start_block and (block_count-1) blocks following it (up to 255). Used to update blockchain from a block onward. Sent unsolicited.  |
 | Content  | A block hash and a block count.  |
 
 | Name | mempool |
 | ---- | ---- |
-| Value    | 3  |
+| Value    | 2  |
 | Size     | `0B`  |
 | Purpose  | Request an inv containing peer's mempool txs. Alternatively named `gettxs` to fit in with `getnodes` and `getblocks`. Sent unsolicited.  |
 | Content  | N/A  |
 
 | Name | inv |
 | ---- | ---- |
-| Value    | 4  |
+| Value    | 3  |
 | Size     | `1B + 1B + ?*256B (DATATYPE + data_ids_count + data_ids[])`  |
 | Purpose  | Tell a peer about peers, blocks or txs that you have. Sent unsolicited or in response to getblocks, getpeers or mempool.  |
 | Content  | List of tx or block hashes that you have in your mempool or blockchain, respectively; or list of peers you are connected to.  |
 
 | Name | getdata |
 | ---- | ---- |
-| Value    | 5  |
+| Value    | 4  |
 | Size     | `1B + 1B + ?*256B (DATATYPE + data_ids_count + data_ids[])`  |
 | Purpose  | Request full block(s)/tx(s). Sent unsolicited.  |
 | Content  | DATATYPE byte and identifying hash(es).  |
 
 | Name | block |
 | ---- | ---- |
-| Value    | 6  |
-| Size     | `BLOCK_HEADER_SIZE to 1MB (header + body)`  |
+| Value    | 5  |
+| Size     | `4B + [varies] (size + block)`  |
 | Purpose  | Send a full block to a peer. Solicited by getdata.  |
 | Content  | A full block.  |
 
 | Name | tx |
 | ---- | ---- |
+| Value    | 6  |
+| Size     | `4B + [varies] (size + tx)`  |
+| Purpose  | Send a full transaction to a peer. Solicited by getdata.  |
+| Content  | A full transaction.  |
+
+| Name | peer |
+| ---- | ---- |
 | Value    | 7  |
-| Size     | `TX_HEADER_SIZE + ?*TX_INPUT_SIZE + ?*TX_OUTPUT_SIZE (header + ins + outs)`  |
+| Size     | `2B + 2B + [varies] (port + addrlen + addr)`  |
 | Purpose  | Send a full transaction to a peer. Solicited by getdata.  |
 | Content  | A full transaction.  |
 
 | Name | alert |
 | ---- | ---- |
 | Value    | 8  |
-| Size     | `1B + 4B + 100B + 1024B (ALERTTYPE + time + msg + sig{ALERTTYPE+time+msg})`  |
-| Purpose  | Notify entire network about network emergency. Only valid if signed by key at key.shelt.ca.  |
+| Size     | `1B + 1B + 4B + 1B + [<=255B] + 1024B (ALERTTYPE + command + time + msg_len + msg + sig{ALERTTYPE+time+msg})`  |
+| Purpose  | Notify entire network about network emergency. Only valid if signed by key at key.shelt.ca.  int |
 | Content  | Information about the network issue. Depending on ALERTTYPE, the implementation may need to take action (such as not allowing mining).  |
 
 | Name | ping |
@@ -228,10 +228,10 @@ See the `<reject>` message specification for full size of error messages.
 
 The following are standards for accomplishing network tasks. This is how they are implemented in the *freecoin* source. Some things to note:
 
-* Networking is designed in such a way that all sending and recieving can happen concurrently and independently of one another. For instance, a function which sends a `<getblocks>` doesn't wait for some `<block>` messages; it simply returns to its caller which in turn waits for some blocks to show up.
+* Networking is designed in such a way that all sending and Receiving can happen concurrently and independently of one another. For instance, a function which sends a `<getblocks>` doesn't wait for some `<block>` messages; it simply returns to its caller which in turn waits for some blocks to show up.
 
 * **mempool**: A place where un-added transactions are stored
-* **limbo**: A place where non-blockchain (recieved) blocks are stored until they can be added
+* **limbo**: A place where non-blockchain (Received) blocks are stored until they can be added
 
 ANY TIME BLOCKS ARE ADDED TO CHAIN: remove any transactions that are in them from the mempool. 
 
@@ -247,71 +247,87 @@ For `(0 <= n < 8)`:
 - If peer<sub>n</sub> for `n>0` has no nodes that are valid to us (according to above exclusions), select another node from the same pool we selected peer<sub>n</sub> from.
 
 #### Joining the network (programatically):
-- Send a connected server a `<getnodes>`. We will recieve an `<inv>` of peers (handled seperately, see **Recieving an `<inv>` (peers)**)
+- Send a connected server a `<getnodes>`. We will Receive an `<inv>` of peers (handled seperately, see **Receiving an `<inv>` (peers)**)
 - Wait 15 seconds and for peercount to reach 4 (normally) or 1 (testnet).
 
-#### Recieving a `<reject>`
+#### Receiving a `<reject>`
 - Display details of error to user.
 
-#### Recieving a `<getnodes>`
-- If we are connected to at least 1 peer:
-  - Reply with a peer `<inv>` containing all of our peers.
+#### Receiving a `<getnodes>`
+TODO noexist
 
-#### Recieving a `<getblocks>`
+#### Receiving a `<getblocks>`
 - If we have the specified `start_block` in our blockchain
   - Reply with as many `<block>`s as we can between (1-255) and (1-block_count).
 
-#### Recieving a `<mempool>`
+#### Receiving a `<mempool>`
 - If we have at least 1 transaction in our mempool:
   - reply with as many `<tx>`s as we can (1-255).
 
-#### Recieving an `<inv>` (blocks)
+#### Receiving an `<inv>` (blocks)
 - For each block hash:
   - If we don't have the block hash in our blockchain or limbo:
     - reply with a `<getdata>` for the block.
 
-#### Recieving an `<inv>` (transactions)
+#### Receiving an `<inv>` (transactions)
 - For each transaction hash:
   - If we don't have the transaction hash in our mempool:
     - Reply with a `<getdata>` for the transaction.
 
-#### Recieving an `<inv>` (peers)
-- Save the peers (excluding ourselves and ones we already have) to file
-- If we are connected to less than 8 peers:
-  - TODO
+#### Receiving a `<getdata>` (blocks)
+- For each requested block
+  - If we have the block in limbo or our blockchain:
+    - Reply with the correct `<block>`
 
-#### Recieving a `<getdata>`
-- TODO
+#### Receiving a `<getdata>` (txs)
+- For each requested tx:
+  - If we have the tx in our mempool:
+    - Reply with the correct `<tx>`
 
-#### Recieving a `<block>`
+#### Receiving a `<getdata>` (peers)
+- If we are connected to at least 1 peer:
+  - Reply with a `<peer>` of all connected peers
+
+#### Receiving a `<block>`
 - If the block height compared to our blockchain height is:
   - **Less than or equal to, or 2 or more greater than:**
     - Save the block to limbo.
   - **1 greater than:**
     - If the `prev_blockhash` is the different from the latest block in our chain:
       - Save the block to limbo.
-    - Otherwise, check if this block is valid. If it isn't:
-        - Drop and block the peer that sent it.
-    - Otherwise, add this block to our blockchain.
+    - Otherwise:
+        -check if this block is valid. If it isn't:
+          - Drop and block the peer that sent it.
+        - Otherwise:
+          - Add this block to our blockchain.
+          - Tell our peers about this block in an `<inv>`
 - For each block in limbo with a height greater than our current blockchain height:
   - If that block can be traced back (through `prev_hash`s) to a block in our blockchain:
     - If each block in that limbo chain is valid:
       - Swap the limbo chain with our current blockchain at the point of similarity (this is called a **revert**). The unused blocks should now be in limbo.
-    - Otherwise, drop and block the peer that sent it. Optionally, send a error-specific `<reject>` message.
-  - Otherwise, send a `<getblock>` for the referenced yet missing block.
+      - Send all our peers an `<inv>` containing the newly added chain.
+    - Otherwise:
+      - drop and block the peer that sent it. Optionally, send a error-specific `<reject>` message.
+  - Otherwise:
+      send a `<getblock>` for the referenced yet missing block.
 
-#### Recieving a `<tx>`
+#### Receiving a `<tx>`
 - If we don't have the transaction hash in our mempool:
   - If the transaction is double-spending from the mempool or the blockchain
   - If the transaction is valid
 
-#### Recieving an `<alert>`
+#### Receiving a `<peer>`
+- Save the peers (excluding ourselves and ones we already have) to file
+- If we are connected to less than 8 peers:
+  - TODO
+
+#### Receiving an `<alert>`
 - TODO
 
-#### Recieving a `<ping>`
+#### Receiving a `<ping>`
 - Reply with `<pong>`
 
-#### Recieving a `<pong>`
+#### Receiving a `<pong>`
 - Inform user
 
 
@@ -398,6 +414,7 @@ Freecoin currently uses Berkeley DB for data storage.
 
 
 ### Misc
+* Make networking ipv6-friendly
 * Clean up header files
 * The first 64B chunk of every hash need not be calculated on each iteration.
 * make all functions that copy data to a ptr also return the ptr

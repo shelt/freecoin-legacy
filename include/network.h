@@ -11,6 +11,7 @@ typedef struct //TODO does this struct need to keep track of if its a server or 
     uint addr_len;
     char addr[MAX_ADDR_LENGTH];
     int connfd;
+    Network *network;
 } Peer;
 
 typedef struct
@@ -18,6 +19,8 @@ typedef struct
     uint server_ready;
     Peer **peers;
     uint peers_count;
+    Dbs *dbs;
+    pthread_mutex_t mutex;
 } Network;
 
 
@@ -50,20 +53,20 @@ int start_client_conn(char *addr, uint port, Net_info *net_info);
 uint get_net_time();
 
 #define CTYPE_REJECT 0
-#define CTYPE_GETNODES 1
-#define CTYPE_GETBLOCKS 2
-#define CTYPE_MEMPOOL 3
-#define CTYPE_INV 4
-#define CTYPE_GETDATA 5
-#define CTYPE_BLOCK 6
-#define CTYPE_TX 7
+#define CTYPE_GETBLOCKS 1
+#define CTYPE_MEMPOOL 2
+#define CTYPE_INV 3
+#define CTYPE_GETDATA 4
+#define CTYPE_BLOCK 5
+#define CTYPE_TX 6
+#define CTYPE_PEER 7
 #define CTYPE_ALERT 8
 #define CTYPE_PING 9
 #define CTYPE_PONG 10
 
 #define DTYPE_BLOCK 0
-#define DTYPE_TRANSACTION 1
-#define DTYPE_PEERS 2
+#define DTYPE_TX 1
+#define DTYPE_PEER 2
 
 #define ERR_UNUSED 12
 

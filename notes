@@ -34,3 +34,7 @@ update means compute and write
 
 
 m_ prefix means this function allocates memory that is returned in some way, or deallocates memory that was previously allocated by a sister m_ function.
+
+
+
+having more than 255 txs could create a bug where transactions stored at indexes abobve that are not sent
