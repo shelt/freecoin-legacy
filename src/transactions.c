@@ -69,6 +69,27 @@ void r_tx_gen(
     memcpy(&dest[POS_TX_BODY + size_ins], outs, size_outs);
 }
 
+void r_tx_in_gen(
+                 uchar *ref,
+                 ushort index,
+                 uchar *pubkey,
+                 uchar *sig,
+                 uchar *dest
+                 )
+{
+    memcpy(&dest[POS_TX_IN_REF, ref, SIZE_TX_IN_REF);
+    ustob(index, &dest[POS_TX_IN_INDEX]);
+    memcpy(&dest[POS_TX_IN_PUBKEY], pubkey, SIZE_TX_IN_PUBKEY);
+    memcpy(&dest[POS_TX_IN_SIG], sig, SIZE_TX_IN_SIG);
+}
+
+void r_tx_out_gen(uchar *address, uint amount, uchar *dest)
+{
+    memcpy(&dest[POS_TX_OUT_ADDR], address, SIZE_TX_OUT_ADDR);
+    uitob(amount, &dest[POS_TX_OUT_AMOUNT]);
+}
+
+
 
 /*******************
  ** MISCELLANEOUS **

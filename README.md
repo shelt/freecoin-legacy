@@ -242,7 +242,7 @@ The underlying goal of each client that keeps the network working is: we always 
 
 For `(0 <= n < 8)`:
 
-- Ask peer<sub>n</sub> what peers they are connected to. Select a node randomly from this pool (excluding ourself,  peer<sub>[0,n   1]</sub> and any nodes we've failed to connect to). This is peer<sub>n+1</sub>.
+- Ask peer<sub>n</sub> what peers they are connected to. Select a node randomly from this pool (excluding ourself,  peer<sub>[0,n-1]</sub> and any nodes we've failed to connect to). This is peer<sub>n+1</sub>.
 - If peer<sub>n</sub> for `n>0` has less than 8 peers, send them a list of all our peers.
 - If peer<sub>n</sub> for `n>0` has no nodes that are valid to us (according to above exclusions), select another node from the same pool we selected peer<sub>n</sub> from.
 

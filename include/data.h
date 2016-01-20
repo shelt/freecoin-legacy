@@ -18,6 +18,7 @@ typedef struct
     DB *limbo;
     DB *txs;
     DB *nodes;
+    Mempool *mempool;
 } Dbs;
 
 

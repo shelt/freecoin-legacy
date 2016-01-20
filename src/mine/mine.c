@@ -127,11 +127,11 @@ int main(int argc, char **argv)
                               );
          
         v_printf("WORKBLOCK: Adding coinbase transaction...");
-        uchar *coinbase_output = m_tx_output_gen(
-        Tx *coinbase_tx = m_tx_gen(0, 1, 0, NULL, &output);
+        uchar *coinbase_output = malloc(SIZE_TX_OUT);
+        r_tx_out_gen(miner_addr, MINING_REWARD, coinbase_output);
+        Tx *coinbase_tx = m_tx_gen(0, 1, 0, NULL, &coinbase_output);
         block_add_tx(workblock, coinbase_tx);
-        free(output);
-        
+        free(coinbase_output);
         
         while(1)
         {
@@ -141,14 +141,11 @@ int main(int argc, char **argv)
                 break;
 
             // Check for new mempool txs
-            int diff = data_mempool_get_size(mempool) - (block_get_tx_count(workblock) - 1); // -1 for coinbase tx
+            int diff = data_mempool_get_size(mempool) - (btoui(&workblock[POS_BLOCK_TX_COUNT]) - 1); // -1 for coinbase tx
             for(int i=0; i<diff; i++)
-            {
-                data_mempool_get(mempool, i, tx_buffer);
-                block_add_tx(workblock, tx_buffer);
-            }
+                block_add_tx(workblock, data_mempool_get(mempool, i));
 
-            block_set_time(workblock, get_curr_time()); // TODO We could also modify the coinbase output based on surplus of txs
+            uitob(get_curr_time(), &workblock[POS_BLOCK_TIME]); // TODO We could also modify the coinbase output based on surplus of txs
             mine(workblock, target, 10000);
         }
     }

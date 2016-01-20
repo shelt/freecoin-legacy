@@ -527,6 +527,14 @@ int _data_limbo_scan_can_trace_back(Dbs *dbs, uchar *start_hash, uchar *end_hash
     return ret;
 }
 
+/******************************
+** "nodes" database scanning **
+******************************/
+int data_nodes_get_initial(Peer *peer)
+{
+    return 1; //TODO
+}
+
 
 
 /*******************************
@@ -542,7 +550,7 @@ uint data_mempool_get_size(Dbs *dbs)
     pthread_mutex_unlock(dbs->mempool->mutex);
 }
 
-Tx *data_mempool_get(Dbs *dbs, uint index, uchar *dest)
+Tx *data_mempool_get(Dbs *dbs, uint index)
 {
     pthread_mutex_lock(dbs->mempool->mutex);
     
@@ -557,12 +565,29 @@ Tx *data_mempool_get(Dbs *dbs, uint index, uchar *dest)
 
 void data_mempool_add(Dbs *dbs, Tx *tx)
 {
+    if (data_mempool_exists(dbs, tx->hash)
+        return;
     pthread_mutex_lock(dbs->mempool->mutex);
     
     dbs->mempool->txs[dbs->mempool->count] = tx;
     dbs->mempool->count++;
 
     pthread_mutex_unlock(dbs->mempool->mutex);
+}
+
+int data_mempool_exists(Dbs *dbs, uchar *hash)
+{
+    int retval = 0;
+    pthread_mutex_lock(dbs->mempool->mutex);
+    
+    uint count = dbs->mempool->count;
+    for (int i=0; i<count; i++)
+        if (memcmp(dbs->mempool->txs[i]->hash, hash, SIZE_SHA256) == 0)
+            retval = 1;
+    
+    pthread_mutex_unlock(dbs->mempool->mutex);
+    
+    return retval;    
 }
 
 Tx *data_mempool_del(Dbs *dbs, uchar *hash)

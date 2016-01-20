@@ -37,9 +37,10 @@
 
 
 /* VARIOUS NET SPECIFICATIONS */
+#define MAX_MSG_SIZE 1024*1024*2
+
 #define TESTNET_EPOCH 1451606400
 #define MAX_GETBLOCKS 500
-
 #define MAX_INV_COUNT 255
 
 // Number of 10M intervals in 1 day

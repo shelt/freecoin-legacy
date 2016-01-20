@@ -4,6 +4,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "queue.h"
+#include "data.h"
+
+typedef struct _s_network Network;
 
 typedef struct //TODO does this struct need to keep track of if its a server or client connection?
 {
@@ -14,7 +17,7 @@ typedef struct //TODO does this struct need to keep track of if its a server or 
     Network *network;
 } Peer;
 
-typedef struct
+typedef struct _s_network
 {
     uint server_ready;
     Peer **peers;
@@ -24,33 +27,6 @@ typedef struct
 } Network;
 
 
-
-/*typedef struct
-{
-    uint server_port;         // set by network thread
-    uint server_active;       // set by network thread
-} Net_info;
-typedef struct
-{
-    int connfd;
-    int acting_server; // 0 for client, 1 for server
-    Net_info *net_info;
-    struct sockaddr_in peeraddr; //unused
-    socklen_t peerlen;           //unused
-} conn_thread_params;
-typedef struct
-{
-    char addr[80];
-    uint port;
-    uint invalid;
-    int connfd;
-} peer_info_t;*/
-
-Net_info *join_network();
-
-int start_client_conn(char *addr, uint port, Net_info *net_info);
-
-uint get_net_time();
 
 #define CTYPE_REJECT 0
 #define CTYPE_GETBLOCKS 1

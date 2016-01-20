@@ -42,6 +42,7 @@ ALWAYS newline parameter lists of 4 or more (see transactions.c for bracket styl
 
 
 ### TODO ###
+all instances of cursor should probably use the for loop index instead
 transactions.c is_coinbase_tx
 bignum.c
 blocks.c etarget target

@@ -2,6 +2,7 @@
 #include "printing.h"
 #include "queue.h"
 #include "network.h"
+#include "data.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -17,20 +18,19 @@
 Network *join_network(Dbs *dbs)
 {
     Network *network = malloc(sizeof(Network));
-    Network->server_ready = 0;
-    Network->mutex = PTHREAD_MUTEX_INITIALIZER;
-    Network->peers = malloc(sizeof(Peer) * MAX_CONNECTED_PEERS);
-
-    Dbs *dbs = m_dbs_init();
+    network->server_ready = 0;
+    network->mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+    network->dbs = dbs;
+    network->peers = malloc(sizeof(Peer) * MAX_CONNECTED_PEERS);
 
     uint ret;
     network->peers[0] = malloc(sizeof(Peer));
     while (1)
     {
-        pthread_mutex_lock(network->mutex);
+        pthread_mutex_lock(&network->mutex);
         if (network->peers_count > 0)
             break;
-        ret = data_peers_get_top(network->peers[0]);
+        ret = data_nodes_get_initial(network->peers[0]);
         if (ret != 0)
         {
             printf("Failed to find any working nodes. \n \
@@ -62,163 +62,178 @@ Network *join_network(Dbs *dbs)
 ///////////////////////
 
 // Threaded (any amount)
-void *handle_connection(void *peer)
+void *handle_connection(void *vpeer)
 {
-    // Dereferenced stack variables
-    int connfd = ((Peer *)peer)->connfd;
+    Peer *peer = (Peer *) vpeer;
 
     int n;
     uchar *msg = malloc(MAX_MSG_SIZE);
+    uchar *resp = malloc(MAX_MSG_SIZE);
+    if (msg == NULL)
+        die("Failed to allocate msg buffer");
+    if (resp == NULL);
+        die("Failed to allocate response buffer");
     for(;;)
     {
-        n = recvfrom(connfd, msg, MAX_MSG_SIZE, 0, NULL, 0);
+        n = recvfrom(peer->connfd, msg, MAX_MSG_SIZE, 0, NULL, 0);
         if (n == 0)
-            die("Peer has shutdown"); // TODO we shouldn't die because of this, simply return or something
-        else if (n < 0)
-            die("Error receiving from peer. ERRNO %d\n",errno); //todo don't die, return
-        
-        // Parsing
-        if (ntohs(bytes_to_ushort(msg[0])) != __VERSION)
         {
-            uchar resp = ERR_BAD_VERSION;
-            sendto_peer(connfd, CTYPE_REJECT, &resp, 1);
+            v_printf("Peer has shutdown");
             break;
         }
-        switch (msg[2]) //TODO MAIN redo all of these and called functions: msg_ and msgall_ should NOT ACCESS THE DATABASE. All information should be passed to the function. ////////////////////////////////////
+        else if (n < 0)
+        {
+            v_printf("Error receiving from peer. ERRNO %d\n",errno);
+            break;
+        }
+        
+        // Parsing
+        if (ntohs(bytes_to_ushort(msg[0])) != __VERSION) //TODO constant
+        {
+            resp[0] = ERR_BAD_VERSION;
+            sendto_peer(peer, CTYPE_REJECT, resp, 1);
+            break;
+        }
+        switch (msg[2])//TODO constant
         {
             case CTYPE_REJECT:
-                printf("Receive CTYPE_REJECT: %d", msg[CTYPE_REJECT_POS_ERRORTYPE]); //TODO
+                printf("Received CTYPE_REJECT: %d", msg[CTYPE_REJECT_POS_ERRORTYPE]); //TODO
             break;
 
             case CTYPE_GETBLOCKS:
-                msg_inv_blocks(peer, &msg[CTYPE_GETBLOCKS_POS_START_BLOCK], &msg[CTYPE_GETBLOCKS_POS_BLOCK_COUNT])
+                int count = build_block_list(peer->network->dbs, &msg[CTYPE_GETBLOCKS_POS_START_BLOCK], &msg[CTYPE_GETBLOCKS_POS_BLOCK_COUNT], &resp[2]);
+                resp[0] = DTYPE_BLOCK;
+                resp[1] = count;
+                sendto_peer(peer, CTYPE_INV, resp, 2 + (count * SIZE_SHA256));
             break;
 
             case CTYPE_MEMPOOL:
-                msg_inv_txs(peer);
+                int count = build_mempool_list(peer->network->dbs, &resp[2]);
+                resp[0] = DTYPE_TX;
+                resp[1] = count;
+                sendto_peer(peer, CTYPE_INV, resp, 2 + (count * SIZE_SHA256));
             break;
 
             case CTYPE_INV:
                 switch (msg[CTYPE_INV_POS_DATATYPE])
-                { // TODO this section should be more DRY
+                {
                     case DTYPE_BLOCK:
-                        uchar count = msg[CTYPE_INV_POS_DATA_IDS_COUNT];
-                        int cursor = CTYPE_INV_POS_DATA_IDS;
-                        for (int i=0; i<count; i++)
-                        {
-                            if (!(data_blocks_exists(peer->network->dbs, &msg[cursor]) ||
-                                !(data_limbo_exists(peer->network->dbs, &msg[cursor])))
-                            {
-                                uchar *hash = msg[cursor];
-                                msg_getdata(peer, DTYPE_BLOCK, &hash, 1); // TODO should compile all missing ones and send a single getdata
-                            }
-                            cursor += SIZE_SHA256;
-                        }
+                        int count = build_missing_blocks_list(peer->network->dbs, &msg[CTYPE_INV_POS_DATA_IDS], msg[CTYPE_INV_POS_DATA_IDS_COUNT], &resp[2]);
+                        resp[0] = DTYPE_BLOCK;
+                        resp[1] = count;
+                        sendto_peer(peer, CTYPE_GETDATA, resp, 2 + (count * SIZE_SHA256));
                     break;
                     case DTYPE_TX:
-                        uchar count = msg[CTYPE_INV_POS_DATA_IDS_COUNT];
-                        int cursor = CTYPE_INV_POS_DATA_IDS
-                        for (int i=0; i<count; i++)
-                        {
-                            if (!data_mempool_exists(peer->network->dbs, &msg[cursor]))
-                            {
-                                uchar *hash = msg[cursor];
-                                msg_getdata(peer, DTYPE_TX, &hash, 1); // TODO should compile all missing ones and send a single getdata
-                            }
-                            cursor += SIZE_SHA256;
-                        }
+                        int count = build_missing_tx_list(peer->network->dbs, &msg[CTYPE_INV_POS_DATA_IDS], msg[CTYPE_INV_POS_DATA_IDS_COUNT], &resp[2]);
+                        resp[0] = DTYPE_TX;
+                        resp[1] = count;
+                        sendto_peer(peer, CTYPE_GETDATA, resp, 2 + (count * SIZE_SHA256));
                     break;
                 }
-                break;
+            break;
             case CTYPE_GETDATA:
                 switch (msg[CTYPE_INV_POS_DATATYPE])
                 {
                     case DTYPE_BLOCK:
                         uchar count = msg[CTYPE_GETDATA_POS_DATA_IDS_COUNT];
-                        int cursor = CTYPE_GETDATA_POS_DATA_IDS;
-                        for (int i=0; i<count; i++)
-                        {
-                            if (data_blocks_exists(peer->network->dbs, &msg[cursor]))
+                        uchar max = count * SIZE_SHA256;
+                        for (int i=CTYPE_GETDATA_POS_DATA_IDS; i<max; i+=SIZE_SHA256)
+                            if (data_blocks_exists(peer->network->dbs, &msg[i])
                             {
-                                uchar *block = malloc(MAX_BLOCK_SIZE);
-                                data_blocks_get(peer->network->dbs, &msg[cursor], block);
-                                msg_block(peer, block, block_compute_size(block));
-                                free(block);
-                            }//TODO do we need to check limbo too?
-                            cursor += SIZE_SHA256;
-                        }
+                                data_blocks_get(peer->network->dbs, &msg[i], &resp[4]);
+                                uint size = block_get_size(&resp[i+4]);
+                                uitob(size, resp);
+                                sendto_peer(peer, CTYPE_BLOCK, resp, 4 + size);
+                            }
                     break;
                     case DTYPE_TX:
                         uchar count = msg[CTYPE_GETDATA_POS_DATA_IDS_COUNT];
-                        int cursor = CTYPE_GETDATA_POS_DATA_IDS;
-                        for (int i=0; i<count; i++)
-                        {
-                            if (data_mempool_exists(peer->network->dbs, &msg[cursor]))
+                        for (int i=CTYPE_GETDATA_POS_DATA_IDS; i<max; i+=SIZE_SHA256)
+                            if (data_mempool_exists(peer->network->dbs, &msg[i])
                             {
-                                uchar *tx = malloc(MAX_TX_SIZE);
-                                data_mempool_get(peer->network->dbs, &msg[cursor], tx);
-                                msg_block(peer, tx, tx_compute_size(tx));
-                                free(tx);
+                                data_mempool_get(peer->network->dbs, &msg[i], &resp[4]);
+                                uint size = tx_get_size(&resp[i+4]);
+                                uitob(size, resp);
+                                sendto_peer(peer, CTYPE_TX, resp, 4 + size);
                             }
-                            cursor += SIZE_SHA256;
-                        }
                     break;
                     case DTYPE_PEER:
                         pthread_mutex_lock(peer->network->mutex);
-                        uint count = peer->network->peers_count;
-                        for (int=0; i<count; i++)
+                        uchar count = peer->network->peers_count;
+                        for (int i=0; i<count; i++)
                         {
-                            msg_peer(peer, peer->network->peers[i]);
+                            int len = peer->network->peers[i].addrlen;
+                            ustob(peer->network->peers[i].port, resp);
+                            ustob(len, &resp[2]);
+                            memcpy(&resp[4], peer->network->peers[i].addr, len);
+                            sendto_peer(peer, CTYPE_PEER, resp, 4 + len);
                         }
-                        pthread mutex_unlock(peer->network->mutex);
+                        pthread_mutex_unlock(peer->network->mutex);
                     break;
                 }
-                break;
+            break;
             case CTYPE_BLOCK:
-                    pthread_mutex_lock(peer->network->mutex);//TODO why is this required here
-                    uint size = bytes_to_uint(&msg[CTYPE_BLOCK_POS_SIZE]);
+                    pthread_mutex_lock(peer->network->mutex);//TODO why is this required here TODO are all of these used?
+                    uint size = btoui(&msg[CTYPE_BLOCK_POS_SIZE]);
                     uchar *block = &msg[CTYPE_BLOCK_POS_BLOCK];
-                    uint height = block_get_height(block);
+                    uint height = btoui(&block[POS_BLOCK_HEIGHT]);
                     uint curr_height = data_chain_get_height(peer->network->dbs);
+                    uchar *curr_hash = malloc(SIZE_SHA256);
+                    data_chain_get(peer->network->dbs, curr_height, curr_hash);
+                    
+                    if (valid_block(block)) //TODO and isn't too old using REASONABLE_CONFIRMATIONS
+                        data_blocks_add(peer->network->dbs, block);
+                    // TODO else notify peer of rejection and drop them
+                    
                     if ((height <= curr_height) ||                     // less than or equal to, or
                        ( height > 2 && ((height - 2) >= curr_height))) // 2 or more greater than
                     {
-                        if (valid_block(block))
-                        {
-                            data_limbo_add(peer->network->dbs, block);
-                            
-                            uchar *hash = malloc(SIZE_SHA256);
-                            block_compute_hash(block, hash);
-                            msgall_inv_blocks(peer->network, hash, 0);
-                            free(hash);
-                        }// TODO else notify peer of rejection and drop them
+                        data_limbo_add(peer->network->dbs, block);
+                        // Notify peers
+                        block_compute_hash(block, &resp[2]);
+                        resp[0] = DTYPE_BLOCK;
+                        resp[1] = 1;
+                        sendto_peer(peer, CTYPE_GETDATA, resp, 2 + SIZE_SHA256);
                     }
                     else if ((height-1) == curr_height) // 1 greater than
                     {
                         if (memcmp(&block[prev_hash],
-                                   data_chain_get(peer->network->dbs, curr_height),
+                                   curr_hash,
                                    SIZE_SHA256) == 0)
-                        {
-                            data_blocks_add(peer->network->dbs, block);
-                        }
+                            data_chain_add(peer->network->dbs, block);
                         else
-                        {
                             data_limbo_add(peer->network->dbs, block);
-                        }
                     }
                     data_limbo_scan(peer->network->dbs, peer->network);
                     pthread_mutex_unlock(peer->network->mutex);
                 break;
             case CTYPE_TX:
-                break;
+                pthread_mutex_lock(peer->network->mutex);
+                if (peer-network->mempool->count < MAX_MEMPOOL_SIZE)
+                {
+                    ushort in_count = btous(&msg[CTYPE_TX_POS_BODY + POS_TX_IN_COUNT]);
+                    ushort out_count = btous(&msg[CTYPE_TX_POS_BODY + POS_TX_OUT_COUNT]);
+                    uint lock_time = btoui(&msg[CTYPE_TX_POS_BODY + POS_TX_LOCK_TIME]);
+                    M_tx tx = m_tx_gen(
+                                       in_count,
+                                       out_count,
+                                       lock_time,
+                                       &msg[CTYPE_TX_POS_BODY + POS_TX_BODY],
+                                       &msg[CTYPE_TX_POS_BODY + POS_TX_BODY + (in_count * SIZE_TX_INPUT)]
+                                       );
+                    data_mempool_add(peer->network->dbs, tx);
+                }
+                pthread_mutex_unlock(peer->network->mutex);
+            break;
             case CTYPE_ALERT:
-                break;
+                //TODO
+            break;
             case CTYPE_PING:
-                    msg_pong(peer);
-                break;
+                    sendto_peer(c, CTYPE_PONG, NULL, 0);
+            break;
             case CTYPE_PONG: //TODO
                     print("Received pong from peer %d", peer->connfd);
-                break;
+            break;
         }
                 
         
@@ -264,6 +279,7 @@ void *server_listener(void *network)
 
         // Create peer
         Peer *peer = malloc(sizeof(Peer));
+        peer->network = network;
         peer->port = cliaddr.sin_port;
         peer->addr = inet_ntoa(sin_addr.s_addr);
         peer->connfd = connfd;
@@ -314,189 +330,24 @@ int start_client_conn(Peer *peer)
 
 ///// Misc /////
 // This should only be called from message functions (TODO until changed)
-void sendto_peer(int connfd, char CTYPE, uchar *msg, uint msg_length)
+void sendto_peer(Peer *peer, char CTYPE, uchar *msg, uint msg_length)
 {
     // Create raw msg by appending version and CTYPE bytes
     uchar *raw_msg = malloc(msg_length + 3);
     raw_msg[0] = __VERSION << 8 & 0xFF;
     raw_msg[1] = __VERSION      & 0xFF;
     raw_msg[2] = CTYPE;
-    if (msg_length > 0)
+    if (msg_length > 0)f
         memcpy(&raw_msg[1], msg, msg_length);
-    if ( sendto(connfd, raw_msg, (msg_length + 1), 0, NULL, 0) < 0)
+    if ( sendto(peer->connfd, raw_msg, (msg_length + 1), 0, NULL, 0) < 0)
         die("Send to peer failed. ERRNO %d\n", errno); //TODO don't die because of this
     free(raw_msg);
 }
 
 
 
-
-////////// Network message functions //////////
-
-void msg_reject(int c, uchar error, uchar *about, uchar size)
-{
-    int msg_size = 1 + size;
-    uchar *msg = malloc(msg_size);
-    
-    msg[0] = error;
-    memcpy(&msg[1], about, size);
-    sendto_peer(c, CTYPE_REJECT, msg, msg_size);
-
-    free(msg);
-}
-
-void msg_getnodes(int c)
-{
-    sendto_peer(c, CTYPE_GETNODES, NULL, 0);
-}
-
-void msg_getblocks(int c, uchar *start_block, uchar count)
-{
-    // Allocation
-    int msg_size = SIZE_SHA256 + 1;
-    uchar *msg = malloc(msg_size);
-    
-    memcpy(msg, start_block, SIZE_SHA256);
-    msg[SIZE_SHA256] = count;
-    sendto_peer(c, CTYPE_GETBLOCKS, msg, msg_size);
-    
-    free(msg);
-}
-
-void msg_mempool(int c)
-{
-    sendto_peer(c, CTYPE_MEMPOOL, NULL, 0);
-}
-
-void msg_inv_blocks(Peer *p, uchar *start_block, uchar consecutive_blocks)
-{
-    uchar *start_header = malloc(SIZE_BLOCK_HEADER);
-    int ret = data_blocks_get_header(peer->network->dbs, start_block, start_header);
-    if (ret != 0)
-        return;
-    uint start = bytes_to_uint(start_header[POS_BLOCK_HEIGHT]);
-    uint end = start + consecutive_blocks + 1; // "end" block is not inclusive
-    uint max = data_chain_get_height();
-
-    if (start > max)
-        return;
-    if ((end-1) > max)
-        end = max;
-    if ((end - start) > MAX_INV_COUNT)
-        end = start + MAX_INV_COUNT;
-    
-    // Allocation
-    int msg_size = 2 + ((end-start) * SIZE_SHA256);
-    uchar *msg = malloc(msg_size);
-
-    msg[0] = DTYPE_BLOCK;
-    msg[1] = end - start;
-    int cursor = 2;
-    for (int i=start; i<end; i++)
-    {
-        data_chain_get(p->network->dbs, i, &msg[cursor]);
-        cursor += SIZE_SHA256;
-    }
-    sendto_peer(p->connfd, CTYPE_INV, msg, msg_size);
-
-    free(msg);
-}
-
-void msg_inv_txs(Peer *p)
-{
-    uint count = data_mempool_get_size(p->network->dbs);
-    if (count > MAX_INV_COUNT)
-        count = MAX_INV_COUNT;
-
-    int msg_size = 2 + (count * SIZE_SHA256);
-    uchar *msg = malloc(msg_size);
-
-    msg[0] = DTYPE_TX;
-    msg[1] = count;
-    int cursor = 2;
-    for (int i=0; i<count; i++)
-    {
-        data_mempool_get(p->network->dbs, i, msg[cursor]);
-        cursor += SIZE_SHA256;
-    }
-}
-
-void msg_getdata(int c, uchar type, uchar **ids, uchar count)
-{
-    int msg_size = 2 + (SIZE_SHA256 * count);
-    uchar *msg = malloc(msg_size);
-    msg[0] = type;
-    msg[1] = count;
-    int cursor = 2;
-    for(int i=0; i<count; i++)
-    {
-        memcpy(&msg[cursor], ids[i], SIZE_SHA256);
-        cursor += SIZE_SHA256;
-    }
-    sendto_peer(c, CTYPE_GETDATA, msg, msg_size);
-
-    free(msg);
-}
+/*************************
+**Message-all functions **
+*************************/
 
 
-
-////   OLD    /////
-
-void msg_block(int c, uchar *block, uint size)
-{
-    int msg_size = 4 + size;
-    uchar *msg = malloc(msg_size);
-    uint_to_bytes(size, msg[0]);
-    memcpy(&msg[4], block, size);
-    sendto_peer(c, CTYPE_BLOCK, msg, msg_size);
-    
-    free(msg);
-}
-// Same as above
-void msg_tx(int c, uchar *tx, uint size)
-{
-    int msg_size = 4 + size;
-    uchar *msg = malloc(msg_size);
-    uint_to_bytes(size, msg[0]);
-    memcpy(&msg[4], block, size);
-    sendto_peer(c, CTYPE_TX, msg, msg_size);
-    
-    free(msg);
-}
-
-void msg_peer(int c, Peer *peer)
-{
-    int msg_size = 4 + peer->addr_len;
-    uchar *msg = malloc(msg_size);
-    ushort_to_bytes(peer->port, &msg[0]);
-    ushort_to_bytes(peer->addr_len, &msg[2]);
-    memcpy(&msg[4], peer->addr, peer->addr_len);
-    sendto_peer(c, CTYPE_PEER, msg, msg_size);
-    
-    free(msg);    
-}
-
-void msg_alert(int c, uchar type, uchar cmd, uint time, uchar *about, uchar about_len, uchar *sig)
-{
-    int msg_size = 7 + about_len + SIZE_RSA1024;
-    uchar *msg = malloc(msg_size);
-    msg[0] = type;
-    msg[1] = cmd;
-    uint_to_bytes(time, &msg[2]);
-    msg[6] = about_len;
-    memcpy(msg[7], about, about_len);
-    memcpy(msg[7 + about_len], sig, SIZE_RSA1024);
-    sendto_peer(c, CTYPE_ALERT, msg, msg_size);
-
-    free(msg);
-}
-
-void msg_ping(int c)
-{
-    sendto_peer(c, CTYPE_PING, NULL, 0);
-}
-
-void msg_pong(int c)
-{
-    sendto_peer(c, CTYPE_PONG, NULL, 0);
-}
