@@ -12,10 +12,6 @@ CFLAGS=-Wall -std=c99 -lpthread -I$(I_DIR) -Wno-unused-variable
 
 BDB_FLAGS=--includedir=$(ROOT_DIR)/$(I_DIR) --libdir=$(ROOT_DIR)/$(O_DIR)
 
-$(info $(BDB_FLAGS))
-
-$(exit)
-
 
 default: all
 all: init mine testing
