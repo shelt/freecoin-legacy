@@ -12,11 +12,7 @@
 #include "network.h"
 #include "queue.h"
 #include "blockchain.h"
-
-// todo validation.c
-// passing a point in an array as a ptr looks like &array[x]
-// understand importance of stack vars and pass by value; no memory leaks occur
-
+#include "validation.h"
 
 void succeed(uchar *block, uchar *hash)
 {
@@ -65,68 +61,73 @@ void mine(uchar *workblock, uchar target, uint mtime)
 */
 int main(int argc, char **argv)
 {
+    int ret;
+    
     print_greeting();
-    if (argc==1)
+    if (argc == 1)
         die("Usage: %s <miner address>\n", argv[0]);
     if (strlen(argv[1]) != 128)
         die("Miner address must be 128 hexadecimal digits\n");
     
+    // Store miner address
     uchar miner_addr[SIZE_SHA256];
-    hexstr_to_bytes(miner_addr, argv[1], SIZE_SHA256);
-
-    // TODO validation
-
-    printf("Preparing to begin mining...\n");
-
+    hexstr_to_bytes(argv[1], miner_addr, SIZE_SHA256);
+    
+    printf("Opening databases...");
+    //TODO
+    
     printf("Establishing self on network...\n");
-    join_network(dbs);
+    Network *network = join_network(dbs);
     
     // Latest block info allocations
     uchar *latest_block_hash = malloc(SHA256);
     uint latest_block_height;
     
-    // Get latest block info (pre-update)
-    latest_block_height = data_chain_get_height();
-    data_chain_get(dbs, latest_block_height, latest_block_hash);
+    v_printf("Getting latest block info (pre-update)");
+    latest_block_height = data_chain_get_height(dbs);
+    ret = data_chain_get(dbs, latest_block_height, latest_block_hash);
+    if (ret != 0)
+        die("data_chain_get failed: %d", ret);
 
-    // Update our blockchain and mempool
-    netall_getblocks(latest_block_hash, MAX_GETBLOCKS);
-    netall_mempool();
-
+    v_printf("Updating blockchain and mempool...");
+    msgall_getblocks(network, latest_block_hash, MAX_GETBLOCKS);
+    msgall_mempool();
     sleep(10) // TODO may be excessive
-    // Get latest block info (post-update)
-    latest_block_height = data_chain_get_height();
-    data_chain_get(dbs, latest_block_height, latest_block_hash);
     
+    v_printf("Getting latest block info (post-update)");
+    latest_block_height = data_chain_get_height(dbs);
+    data_chain_get(dbs, latest_block_height, latest_block_hash);
+    if (ret != 0)
+        die("data_chain_get failed: %d", ret);
 
-    printf("Initializing workblock...\n");
+    // PRE-LOOP ALLOCATIONS
     uchar *workblock = malloc(MAX_BLOCK_SIZE);
-
-    // Used to dequeue recieved transactions
-    uchar *tx_buffer = malloc(MAX_TX_SIZE);
-    // Used to compare latest block hash with block's prev_hash
-    uchar *latest_block_hash_cmp_buffer = malloc(SIZE_SHA256);
-
-    uint target;
+    uchar *tx_buffer = malloc(MAX_TX_SIZE);                    // dequeue recieved transactions
+    uchar *latest_block_hash_cmp_buffer = malloc(SIZE_SHA256); // compare latest block hash with block's prev_hash
     while(1)
     {
         printf("Starting a new block...\n");
         
-        // Update info
+        v_printf("Updating block info...");
         latest_block_height = data_chain_get_height();
-        data_chain_get(dbs, latest_block_height, latest_block_hash);
-        target = compute_next_target(dbs, latest_block_hash);
+        ret = data_chain_get(dbs, latest_block_height, latest_block_hash);
+        if (ret != 0)
+            die("data_chain_get failed: %d", ret);
+        
+        uint target = compute_next_target(dbs, latest_block_hash);
 
-        void block_init(__VERSION,
-                        get_curr_time(),
-                        (latest_block_height + 1),
-                        latest_block_hash,
-                        get_next_target(latest_block_hash),
-                        workblock);
-
-        // Coinbase transaction
-        uchar *output = malloc(SIZE_TX_OUTPUT);
-        gen_tx_output(miner_addr, MINING_REWARD, output)
+        v_printf("WORKBLOCK: Adding header...");
+        void block_set_header(
+                              __VERSION,
+                              get_curr_time(),
+                              (latest_block_height + 1),
+                              latest_block_hash,
+                              target,
+                              workblock
+                              );
+         
+        v_printf("WORKBLOCK: Adding coinbase transaction...");
+        uchar *coinbase_output = m_tx_output_gen(
         Tx *coinbase_tx = m_tx_gen(0, 1, 0, NULL, &output);
         block_add_tx(workblock, coinbase_tx);
         free(output);

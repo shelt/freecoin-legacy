@@ -4,11 +4,13 @@
 #include <stdint.h>
 /* CLIENT OPTIONS */
 #define TX_FEE_PER_1K 1
+#define SERVER_PORT 30330
 
 /* DEVELOPER OPTIONS */
 #define __VERSION 1
 #define VERBOSE 1
 #define MINING_REWARD 100
+#define REASONABLE_CONFIRMATIONS 6
 
 #define MAX_PEERS 8
 
@@ -37,6 +39,8 @@
 /* VARIOUS NET SPECIFICATIONS */
 #define TESTNET_EPOCH 1451606400
 #define MAX_GETBLOCKS 500
+
+#define MAX_INV_COUNT 255
 
 // Number of 10M intervals in 1 day
 #define RECALC_TARGET_INTERVAL 144

@@ -1,6 +1,7 @@
 #include "bignum.h"
 #include <string.h>
 // note that bignums are little endian (TODO change to big)
+// TODO the rest of this file
 
 void big_mult(uchar *a, uint a_bytes, uchar *b, uint b_bytes, uchar *res)
 {

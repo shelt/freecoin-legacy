@@ -13,11 +13,8 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
-//TODO move define
-#define SERVER_PORT 30330
-#define MAX_INV_COUNT 255
 
-void join_network(Dbs *dbs)
+Network *join_network(Dbs *dbs)
 {
     Network *network = malloc(sizeof(Network));
     Network->server_ready = 0;
@@ -57,6 +54,7 @@ void join_network(Dbs *dbs)
             sleep(2);
         pthread_mutex_unlock(network->mutex);
     }
+    return network;
 }
 
 ///////////////////////
@@ -86,7 +84,7 @@ void *handle_connection(void *peer)
             sendto_peer(connfd, CTYPE_REJECT, &resp, 1);
             break;
         }
-        switch (msg[2])
+        switch (msg[2]) //TODO MAIN redo all of these and called functions: msg_ and msgall_ should NOT ACCESS THE DATABASE. All information should be passed to the function. ////////////////////////////////////
         {
             case CTYPE_REJECT:
                 printf("Receive CTYPE_REJECT: %d", msg[CTYPE_REJECT_POS_ERRORTYPE]); //TODO
@@ -109,7 +107,7 @@ void *handle_connection(void *peer)
                         for (int i=0; i<count; i++)
                         {
                             if (!(data_blocks_exists(peer->network->dbs, &msg[cursor]) ||
-                                  data_limbo_exists(peer->network->dbs, &msg[cursor])))
+                                !(data_limbo_exists(peer->network->dbs, &msg[cursor])))
                             {
                                 uchar *hash = msg[cursor];
                                 msg_getdata(peer, DTYPE_BLOCK, &hash, 1); // TODO should compile all missing ones and send a single getdata
@@ -177,7 +175,39 @@ void *handle_connection(void *peer)
                 }
                 break;
             case CTYPE_BLOCK:
-                    //TODO HERE
+                    pthread_mutex_lock(peer->network->mutex);//TODO why is this required here
+                    uint size = bytes_to_uint(&msg[CTYPE_BLOCK_POS_SIZE]);
+                    uchar *block = &msg[CTYPE_BLOCK_POS_BLOCK];
+                    uint height = block_get_height(block);
+                    uint curr_height = data_chain_get_height(peer->network->dbs);
+                    if ((height <= curr_height) ||                     // less than or equal to, or
+                       ( height > 2 && ((height - 2) >= curr_height))) // 2 or more greater than
+                    {
+                        if (valid_block(block))
+                        {
+                            data_limbo_add(peer->network->dbs, block);
+                            
+                            uchar *hash = malloc(SIZE_SHA256);
+                            block_compute_hash(block, hash);
+                            msgall_inv_blocks(peer->network, hash, 0);
+                            free(hash);
+                        }// TODO else notify peer of rejection and drop them
+                    }
+                    else if ((height-1) == curr_height) // 1 greater than
+                    {
+                        if (memcmp(&block[prev_hash],
+                                   data_chain_get(peer->network->dbs, curr_height),
+                                   SIZE_SHA256) == 0)
+                        {
+                            data_blocks_add(peer->network->dbs, block);
+                        }
+                        else
+                        {
+                            data_limbo_add(peer->network->dbs, block);
+                        }
+                    }
+                    data_limbo_scan(peer->network->dbs, peer->network);
+                    pthread_mutex_unlock(peer->network->mutex);
                 break;
             case CTYPE_TX:
                 break;
@@ -338,17 +368,19 @@ void msg_mempool(int c)
     sendto_peer(c, CTYPE_MEMPOOL, NULL, 0);
 }
 
-void msg_inv_blocks(Peer *p, uchar *start_block, uchar block_count)
+void msg_inv_blocks(Peer *p, uchar *start_block, uchar consecutive_blocks)
 {
     uchar *start_header = malloc(SIZE_BLOCK_HEADER);
     int ret = data_blocks_get_header(peer->network->dbs, start_block, start_header);
     if (ret != 0)
         return;
-    uint start = bytes_to_uint(start_header[POS_BLOCK_HEIGHT]) + 1;
-    uint end = start + block_count;
+    uint start = bytes_to_uint(start_header[POS_BLOCK_HEIGHT]);
+    uint end = start + consecutive_blocks + 1; // "end" block is not inclusive
     uint max = data_chain_get_height();
 
-    if (end > max)
+    if (start > max)
+        return;
+    if ((end-1) > max)
         end = max;
     if ((end - start) > MAX_INV_COUNT)
         end = start + MAX_INV_COUNT;
@@ -405,9 +437,6 @@ void msg_getdata(int c, uchar type, uchar **ids, uchar count)
 
     free(msg);
 }
-
-
-
 
 
 

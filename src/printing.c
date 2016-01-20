@@ -24,15 +24,14 @@ void print_greeting()
     
 };
 
-void printfv(int verbose, const char *format, ...)
+void v_printf(const char *format, ...)
 {
-    // va_list is a special type that allows hanlding of variable
-    // length parameter list
-    va_list args;
-    va_start(args, format);
-
-    if (verbose > 0)
+    if (VERBOSE)
+    {
+        va_list args;
+        va_start(args, format);
         vfprintf(stdout, format, args);
+    }
 }
 
 void die(const char *string, ...)
@@ -42,6 +41,7 @@ void die(const char *string, ...)
 
     printf("Fatal: ");
     vfprintf (stdout, string, args);
+    printf("\n");
     
     exit(1);
 };
