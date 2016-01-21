@@ -43,57 +43,46 @@ void bytes_to_hexstr(char *string, uchar *bytearr, size_t bytes)
     }
 }
 
-
-
-//TODO use these more prevelantly
-// Big-endian
-void uint_to_bytes(uint a, uchar *bytes)
-{
-    bytes[0] = a >> 24 & 0xFF;
-    bytes[1] = a >> 16 & 0xFF;
-    bytes[2] = a >> 8  & 0xFF;
-    bytes[3] = a       & 0xFF;
-}
-// Big-endian
-uint bytes_to_uint(uchar *bytes)
-{
-    return ntohl((uint)((bytes[0] << 24) |
-                        (bytes[1] << 16) |
-                        (bytes[2] << 8 ) |
-                         bytes[3]));
-}
-// Big-endian
-ushort bytes_to_ushort(uchar *bytes)
-{
-    return ntohs((ushort)((bytes[0] << 8) | bytes[1]));
-}
-
 uint get_curr_time()
 {
     return (uint)time(NULL);
 }
 
 
+//void htoleb(uchar *h, uchar *le)
+//void letohb(uchar *le, uchar *h)
+//void htobeb(uchar *h, uchar *be)
+//void betohb(uchar *be, uchar h)
 
+/**************************
+** BYTES-TYPE CONVERSION **
+**************************/
+// All byte input and output are big-endian
 
-/* BYTE ORDER CONVERSION */
-
-void htoleb(uchar *h, uchar *le)
+uint btoui(uchar *bytes)
 {
-
+    return ntohl((uint)((bytes[0] << 24) |
+                        (bytes[1] << 16) |
+                        (bytes[2] << 8 ) |
+                         bytes[3]));
 }
 
-void letohb(uchar *le, uchar *h)
-{
 
+ushort btous(uchar *bytes)
+{
+    return ntohs((ushort)((bytes[0] << 8) | bytes[1]));
 }
 
-void htobeb(uchar *h, uchar *be)
+void ustob(uchar *dest)
 {
-
+    dest[0] = a >> 8  & 0xFF;
+    dest[1] = a       & 0xFF;
 }
 
-void betohb(uchar *be, uchar h)
+void uitob(uchar *dest)
 {
-
+    dest[0] = a >> 24 & 0xFF;
+    dest[1] = a >> 16 & 0xFF;
+    dest[2] = a >> 8  & 0xFF;
+    dest[3] = a       & 0xFF;
 }

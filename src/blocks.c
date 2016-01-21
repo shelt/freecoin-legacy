@@ -1,3 +1,41 @@
+//TODO rem: bit shifting loads bytes into register, equiv of converting to big-endian
+
+// This file has to do with serialized blocks.
+
+/*
+    The act of using a pointer parameter for returning results
+    is useful for when the result is serialized into already-allocated
+    memory.
+    Functions that generate data
+*/
+
+// TODO perform checking as to not exceed MAX_BLOCK_SIZE
+
+/*  ********************** BLOCK **********************
+    Possible size: 83B to 1MB (max size)
+
+              HEADER 83B                         BODY
+    |-----USED IN BLOCKHASH ---------------|
+    |--------------------------------------|     |--|
+    0000 [4B] [4B] [32B] [32B] 00 [4B] [4B]      [?B]
+    |    |    |   |     |     |   |     |        |
+    |    |    |   |     |     |   |     tx_count |
+    |    |    |   |     |     |   |              |
+    |    |    |   |     |     |   nonce          txs
+    |    |    |   |     |     |
+    |    |    |   |     |     target
+    |    |    |   |     |
+    |    |    |   |     merkle_root     
+    |    |    |   |
+    |    |    |   prev_hash           
+    |    |    |
+    |    |    height
+    |    |
+    |    time
+    |
+    version
+*/
+
 void block_add_header(
                       uint time,
                       uint height,

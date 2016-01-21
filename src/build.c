@@ -1,3 +1,5 @@
+#include "build.h"
+
 /*
     Contains various functions that collect data
     and assemble it in a block of memory.
@@ -21,14 +23,14 @@ uchar build_block_list(Dbs *dbs, uchar *startblock, uint count, uchar *dest)
 }
 
 //limit to 255
-uchar build_mempool_list
+uchar build_mempool_list();
 
 
 
 
-uchar build_getblocks_list
-    if (!(data_blocks_exists(peer->network->dbs, &msg[i])
+uchar build_getblocks_list();
+//    if (!(data_blocks_exists(peer->network->dbs, &msg[i])
 
 
 //dont add more to the dest if our mempool exeeds MAX_MEMPOOL_SIZE. which should be set to the MAX_BLOCK_SIZE - SIZE_BLOCK_HEADER
-uchar build_missing_tx_list
+uchar build_missing_tx_list();

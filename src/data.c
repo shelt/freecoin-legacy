@@ -1,6 +1,4 @@
-#include "array.h"
-#include "build.h"
-
+#include "data.h"
 
 /* data.c
     Contains functions which directly modify databases using
@@ -43,9 +41,9 @@ int db_get(DB *db, DBT *key, DBT *dat)
     return db->get(db, NULL, key, dat, 0);
 }
 
-Db m_db_init(static const char *path, uint type)
+DB m_db_init(const char *path, uint type)
 {
-    Db *db = malloc(sizeof(Db));
+    DB *db = malloc(sizeof(Db));
     int ret;
     
     ret = db_create(db, NULL, 0);
@@ -60,8 +58,10 @@ Db m_db_init(static const char *path, uint type)
                   0);
     if (ret != 0)
         die("Failed to open database: %s", path);
+
+    return db
 }
-void m_db_die(Db *db)
+void m_db_die(DB *db)
 {
     if (db != NULL)
     {
@@ -97,11 +97,11 @@ Dbs *m_dbs_init()
     if (stat(PATH_DATA_DIR, &st) == -1)
         mkdir(PATH_DATA_DIR, 0700);
     
-    db_init(dbs->blocks, PATH_DATA_BLOCKS, DB_HASH);
-    db_init(dbs->chain, PATH_DATA_CHAIN, DB_BTREE);
-    db_init(dbs->limbo, PATH_DATA_LIMBO, DB_BTREE);
-    db_init(dbs->txs, PATH_DATA_TXS, DB_HASH);
-    db_init(dbs->nodes, PATH_DATA_NODES, DB_HASH);
+    dbs->blocks = m_db_init(PATH_DATA_BLOCKS, DB_HASH);
+    dbs->chain  = m_db_init(PATH_DATA_CHAIN, DB_BTREE);
+    dbs->limbo  = m_db_init(PATH_DATA_LIMBO, DB_BTREE);
+    dbs->txs    = m_db_init(PATH_DATA_TXS, DB_HASH);
+    dbs->nodes  = m_db_init(PATH_DATA_NODES, DB_BTREE);
 
     dbs->mempool = malloc(sizeof(Mempool));
     dbs->mempool->mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -137,7 +137,11 @@ void dbs_die(Dbs *dbs)
 // - Move old hashes from chain to limbo
 // - Move new hashes from limbo to chain
 // - Add new txs
-int data_blocks_revert(Dbs *dbs, uchar *common_block_hash, uchar *new_latest_block_hash)
+int data_blocks_revert(
+                       Dbs *dbs,
+                       uchar *common_block_hash,
+                       uchar *new_latest_block_hash
+                       )
 {
     int ret;
     
@@ -491,7 +495,11 @@ void data_limbo_scan(Dbs *dbs, Network *network)
     never encounters the blockchain (or after REASONABLE_CONFIRMATIONS is passed,
     at which point it becomes infeasible that we will find a shared block anyway).
 */
-int data_limbo_scan_can_trace_back(Dbs *dbs, uchar *start_hash, uchar *end_hash)
+int data_limbo_scan_can_trace_back(
+                                   Dbs *dbs,
+                                   uchar *start_hash,
+                                   uchar *end_hash
+                                   )
 {
     int ret = 0;
     uchar *buffer = malloc(BLOCK_HEADER_SIZE);
@@ -509,7 +517,12 @@ int data_limbo_scan_can_trace_back(Dbs *dbs, uchar *start_hash, uchar *end_hash)
     Intermediate recursive function used above.
     start_hash is allowed to be mutated.
 */
-int _data_limbo_scan_can_trace_back(Dbs *dbs, uchar *start_hash, uchar *end_hash, uchar *buffer)
+int _data_limbo_scan_can_trace_back(
+                                    Dbs *dbs,
+                                    uchar *start_hash,
+                                    uchar *end_hash,
+                                    uchar *buffer
+                                    )
 {
     int ret = 0;
     data_blocks_get_header(dbs, start_hash, buffer);

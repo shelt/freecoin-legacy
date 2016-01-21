@@ -1,10 +1,22 @@
-typedef struct
-{
-    uchar *data;
-    uint size;
-    uint max;
-} M_tx
 
+
+/*  ******************* TRANSACTION *******************
+
+          HEADER 10B                  INPUTS 290B             OUTPUTS 36B
+    |----------------------| |----------------------------|  |-----------|
+    0000 0000 0000 00000000  [32B] 0000      [128]  [128]..  [32B][4B]..
+    |    |    |    |         |     |         |      |        |     |
+    |    |    |    |         |     out_index |      |        |     amount
+    |    |    |    |         |               pubkey sig      |
+    |    |    |    lock_time |                               out_address
+    |    |    |              |
+    |    |    out_count      ref_tx
+    |    |
+    |    in_count
+    |
+    version
+
+*/
 
 M_tx m_tx_gen(
               ushort in_count,
@@ -24,6 +36,7 @@ M_tx m_tx_gen(
     
     // Create M_tx struct
     M_tx tx;
+    tx.hash = malloc(SIZE_SHA256);
     tx.data = malloc(size);
     tx.size = size;
     tx.max = size;
@@ -36,6 +49,8 @@ M_tx m_tx_gen(
            outs,
            dest
            );
+
+    tx_compute_hash(tx.data, tx.hash);
     
     return tx;
 }
@@ -45,6 +60,11 @@ void m_tx_die(M_tx tx)
     {
         free(tx.data);
         tx.data = NULL;
+    }
+    if (tx.hash != NULL)
+    {
+        free(tx.hash);
+        tx.hash = NULL;
     }
 }
     

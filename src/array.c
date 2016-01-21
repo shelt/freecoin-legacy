@@ -1,10 +1,4 @@
-
-typedef struct
-{
-    uint length;
-    ushort usize;
-    uchar *data;
-} Array;
+#include "array.h"
 
 Array array_init(uchar *data, ushort usize, uint length, uint size)
 {

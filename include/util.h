@@ -4,17 +4,17 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+uchar hexc_to_nibble(char c); //internal
+char nibble_to_hexc(uchar n); //internal
+
 void hexstr_to_bytes(uchar *bytearr, char *string, size_t bytes);
 void bytes_to_hexstr(char *string, uchar *bytearr, size_t bytes);
 
 uint get_curr_time();
 
-void uint_to_bytes(uint a, uchar *bytes);
-uint bytes_to_uint(uchar *bytes);
-
-
-uint bytes_to_uint(uchar *bytes);
-ushort bytes_to_ushort(uchar *bytes);
-
+uint btoui(uchar *bytes);
+ushort btous(uchar *bytes);
+void ustob(uchar *dest);
+void uitob(uchar *dest);
 
 #endif
