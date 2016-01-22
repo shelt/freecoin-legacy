@@ -23,6 +23,7 @@ struct _s_Dbs
     DB *txs;
     DB *nodes;
     Mempool *mempool;
+    pthread_mutex_t mutex;
 };
 
 
@@ -31,10 +32,10 @@ DBT new_pdbt(uchar *data, uint psize, uint pstart); //internal
 int db_put(DB *db, DBT *key, DBT *dat);             //internal
 int db_get(DB *db, DBT *key, DBT *dat);             //internal
 DB m_db_init(const char *path, uint type);
-void m_db_die(DB *db);
+void m_db_fatal(DB *db);
 int dbs_validate(Dbs *dbs);
 Dbs *m_dbs_init();
-void dbs_die(Dbs *dbs);
+void dbs_fatal(Dbs *dbs);
 
 int data_blocks_revert(
                        Dbs *dbs,
@@ -73,10 +74,10 @@ int _data_limbo_scan_can_trace_back(
 int data_nodes_get_initial(Peer *peer);
 
 uint data_mempool_get_size(Dbs *dbs);
-Tx *data_mempool_get(Dbs *dbs, uint index);
-void data_mempool_add(Dbs *dbs, Tx *tx);
+M_tx *data_mempool_get(Dbs *dbs, uint index);
+void data_mempool_add(Dbs *dbs, uchar *data);
 int data_mempool_exists(Dbs *dbs, uchar *hash);
-Tx *data_mempool_del(Dbs *dbs, uchar *hash);
+M_tx *data_mempool_del(Dbs *dbs, uchar *hash);
 
 
 #endif

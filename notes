@@ -1,6 +1,6 @@
 ## CURRENT TODO ##
 Prune network.c and ensure that:
-- all msg_* functions accept raw, prepared data and do no assembly of any kind.
+startup() which checks to see if block db is nonexistant. If it is, create it and add the initial block (which is hardcoded).
 - all data assembly is done in build.c in the most DRY way possible
 
 

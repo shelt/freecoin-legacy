@@ -77,7 +77,7 @@ void block_add_tx(uchar *block, Tx *tx)
 {
     uint size = block_compute_size(block);
     if ((size + tx->size) >= MAX_BLOCK_SIZE)
-        die("Block overflow during block_add_tx");
+        fatal("Block overflow during block_add_tx");
     memcpy(&block[size], tx->data, tx->size);
     uint tx_count = btoui(&block[POS_BLOCK_TX_COUNT]);
     uitob(++tx_count, &block[POS_BLOCK_TX_COUNT]);

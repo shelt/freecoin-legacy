@@ -32,7 +32,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | Name | getblocks |
 | ---- | ---- |
 | Value    | 1  |
-| Size     | `256B + 1B (start_block + block_count)`  |
+| Size     | `32B + 1B (start_block + block_count)`  |
 | Purpose  | Request an inv containing start_block and (block_count-1) blocks following it (up to 255). Used to update blockchain from a block onward. Sent unsolicited.  |
 | Content  | A block hash and a block count.  |
 
@@ -46,15 +46,15 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | Name | inv |
 | ---- | ---- |
 | Value    | 3  |
-| Size     | `1B + 1B + ?*256B (DATATYPE + data_ids_count + data_ids[])`  |
+| Size     | `1B + 1B + ?*32B (DATATYPE + data_ids_count + data_ids[])`  |
 | Purpose  | Tell a peer about blocks or txs that you have. Sent unsolicited or in response to getblocks or mempool.  |
 | Content  | List of tx or block hashes that you have in your mempool or blockchain, respectively; or list of peers you are connected to.  |
 
 | Name | getdata |
 | ---- | ---- |
 | Value    | 4  |
-| Size     | `1B + 1B + ?*256B (DATATYPE + data_ids_count + data_ids[])`  |
-| Purpose  | Request full block(s)/tx(s). Sent unsolicited.  |
+| Size     | `1B + 1B + ?*32B (DATATYPE + data_ids_count + data_ids[])`  |
+| Purpose  | Request full block(s)/tx(s) or all of a peer's peers. Sent unsolicited, often in response to an inv (for the former cases).  |
 | Content  | DATATYPE byte and identifying hash(es).  |
 
 | Name | block |
@@ -81,7 +81,7 @@ With banks that deal with regular currencies, all regulation happens in one plac
 | Name | alert |
 | ---- | ---- |
 | Value    | 8  |
-| Size     | `1B + 1B + 4B + 1B + [<=255B] + 1024B (ALERTTYPE + command + time + msg_len + msg + sig{ALERTTYPE+time+msg})`  |
+| Size     | `1B + 1B + 4B + 128B + 1B + [<=255B] (ALERTTYPE + command + time + sig{ALERTTYPE+time+msg}) +  msg_len + msg`  |
 | Purpose  | Notify entire network about network emergency. Only valid if signed by key at key.shelt.ca.  int |
 | Content  | Information about the network issue. Depending on ALERTTYPE, the implementation may need to take action (such as not allowing mining).  |
 
@@ -108,56 +108,56 @@ See the `<reject>` message specification for full size of error messages.
 | Name | `BLOCK_CONFLICT` |
 | ---- | ---- |
 | Value    | 4 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Block's `prev_hash` is already in another block.  |
 | Content  | Offending block's hash.  |
 
 | Name | `BLOCK_BAD_TIME` |
 | ---- | ---- |
 | Value    | 5 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Block's time is before last block.  |
 | Content  | Offending block's hash.  |
 
 | Name | `BLOCK_BAD_ROOT` |
 | ---- | ---- |
 | Value    | 6 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Block's `merkle_root` does not match body.  |
 | Content  | Offending block's hash.  |
 
 | Name | `BLOCK_BAD_TARGET` |
 | ---- | ---- |
 | Value    | 7 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Block's target is not correct.  |
 | Content  | Offending block's hash.  |
 
 | Name | `BLOCK_BAD_HASH` |
 | ---- | ---- |
 | Value    | 8 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Block's hash isn't valid as per the target.  |
 | Content  | Offending block's hash.  |
 
 | Name | `BLOCK_BAD_BODY` |
 | ---- | ---- |
 | Value    | 9 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Transaction(s) in body are invalid. No tx-specific reject messages are needed because the offender shouldn't have send such a block anyway.  |
 | Content  | Offending block's hash.  |
 
 | Name | `BLOCK_OVERFLOW` |
 | ---- | ---- |
 | Value    | 10 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Block is larger than 1 MB.  |
 | Content  | Offending block's hash.  |
 
 | Name | `BLOCK_EXISTS` |
 | ---- | ---- |
 | Value    | 11 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Block already exists in the blockchain.  |
 | Content  | Offending block's hash.  |
 
@@ -173,21 +173,21 @@ See the `<reject>` message specification for full size of error messages.
 | Name | `TX_BAD_SIG` |
 | ---- | ---- |
 | Value    | 13 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | Transaction input signature is invalid.  |
 | Content  | Offending transaction's hash.  |
 
 | Name | `TX_BAD_REF` |
 | ---- | ---- |
 | Value    | 14 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | A transaction input is already used or nonexistant. |
 | Content  | Offending transaction's hash.  |
 
 | Name | `TX_REF_OVERSPEND` |
 | ---- | ---- |
 | Value    | 15 |
-| Size     | `256B` |
+| Size     | `32B` |
 | Meaning  | A transaction's inputs are smaller than outputs.  |
 | Content  | Offending transaction's hash  |
 
@@ -258,7 +258,7 @@ TODO noexist
 
 #### Receiving a `<getblocks>`
 - If we have the specified `start_block` in our blockchain
-  - Reply with as many `<block>`s as we can between (1-255) and (1-block_count).
+  - Reply with as many `<block>`s as we can between (1-255) and (1-`block_count`) (not inclusive of `start_block`)
 
 #### Receiving a `<mempool>`
 - If we have at least 1 transaction in our mempool:

@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include "shared.h"
+#include "printing.h"
 
 
 void print_version()
@@ -24,7 +25,7 @@ void print_greeting()
     
 };
 
-void v_printf(const char *format, ...)
+void v_printf(const char *string, ...)
 {
     if (VERBOSE)
     {
@@ -34,7 +35,7 @@ void v_printf(const char *format, ...)
     }
 }
 
-void die(const char *string, ...)
+void fatal(const char *string, ...)
 {
     va_list args;
     va_start(args, string);

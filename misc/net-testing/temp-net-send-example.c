@@ -13,7 +13,7 @@ int main(void) //testing stuff
         if (strcmp(sendline, "debug_close") == 0)
             close(client_peer);
         if ( sendto(client_peer,sendline,strlen(sendline), 0, NULL, 0) < 0)
-            die("Send to peer failed. ERRNO %d\n", errno);
+            fatal("Send to peer failed. ERRNO %d\n", errno);
     }
     /*
        n=recvfrom(sockfd,recvline,10000,0,NULL,NULL);

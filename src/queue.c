@@ -14,7 +14,7 @@ Queue *queue_init()
     q->tail->prev = q->head;
     return q;
 }
-void queue_die(Queue *q)
+void queue_fatal(Queue *q)
 {
     Node *curr = q->head;
     Node *temp;
@@ -44,7 +44,7 @@ void queue_enqueue(Queue *q, uchar *data, uint size)
 uint queue_dequeue(Queue *q, uchar *dest)
 {
     if (q->size == 0)
-        die("Dequeue attempted on empty queue");
+        fatal("Dequeue attempted on empty queue");
     
     memcpy(dest, q->tail->prev->data, q->tail->prev->size);
 

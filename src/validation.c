@@ -1,2 +1,2 @@
 #include "printing.h"
-die("validation.c not implemented");
+fatal("validation.c not implemented");

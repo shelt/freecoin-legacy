@@ -21,7 +21,7 @@ struct _s_Network
     Peer **peers;
     uint peers_count;
     Dbs *dbs;
-    pthread_mutex_t mutex;
+    pthread_mutex_t peers_mutex;
 };
 
 Network *join_network(Dbs *dbs);

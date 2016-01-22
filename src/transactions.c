@@ -27,12 +27,12 @@ M_tx m_tx_gen(
               uchar *outs
               )
 {
-    // Determine size
+    // Determine size TODO move to tx_compute_size
     uint size_ins = SIZE_TX_INPUT  * in_count;
     uint size_outs = SIZE_TX_OUTPUT * out_count
     uint size = SIZE_TX_HEADER + size_ins + size_outs;
     if (size > MAX_TX_SIZE)
-        die("Tx overflow");
+        fatal("Tx overflow");
     
     // Create M_tx struct
     M_tx tx;
@@ -54,7 +54,7 @@ M_tx m_tx_gen(
     
     return tx;
 }
-void m_tx_die(M_tx tx)
+void m_tx_fatal(M_tx tx)
 {
     if (tx.data != NULL)
     {

@@ -65,9 +65,9 @@ int main(int argc, char **argv)
     
     print_greeting();
     if (argc == 1)
-        die("Usage: %s <miner address>\n", argv[0]);
+        fatal("Usage: %s <miner address>\n", argv[0]);
     if (strlen(argv[1]) != 128)
-        die("Miner address must be 128 hexadecimal digits\n");
+        fatal("Miner address must be 128 hexadecimal digits\n");
     
     // Store miner address
     uchar miner_addr[SIZE_SHA256];
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
     latest_block_height = data_chain_get_height(dbs);
     ret = data_chain_get(dbs, latest_block_height, latest_block_hash);
     if (ret != 0)
-        die("data_chain_get failed: %d", ret);
+        fatal("data_chain_get failed: %d", ret);
 
     v_printf("Updating blockchain and mempool...");
     msgall_getblocks(network, latest_block_hash, MAX_GETBLOCKS);
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     latest_block_height = data_chain_get_height(dbs);
     data_chain_get(dbs, latest_block_height, latest_block_hash);
     if (ret != 0)
-        die("data_chain_get failed: %d", ret);
+        fatal("data_chain_get failed: %d", ret);
 
     // PRE-LOOP ALLOCATIONS
     uchar *workblock = malloc(MAX_BLOCK_SIZE);
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
         latest_block_height = data_chain_get_height();
         ret = data_chain_get(dbs, latest_block_height, latest_block_hash);
         if (ret != 0)
-            die("data_chain_get failed: %d", ret);
+            fatal("data_chain_get failed: %d", ret);
         
         uint target = compute_next_target(dbs, latest_block_hash);
 

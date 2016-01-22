@@ -48,7 +48,7 @@ DB m_db_init(const char *path, uint type)
     
     ret = db_create(db, NULL, 0);
     if (ret != 0)
-        die("Failed to create database handler: %s", path);
+        fatal("Failed to create database handler: %s", path);
     ret = db_open(db,
                   NULL,
                   path,
@@ -57,11 +57,11 @@ DB m_db_init(const char *path, uint type)
                   DB_CREATE | DB_THREAD,
                   0);
     if (ret != 0)
-        die("Failed to open database: %s", path);
+        fatal("Failed to open database: %s", path);
 
     return db
 }
-void m_db_die(DB *db)
+void m_db_fatal(DB *db)
 {
     if (db != NULL)
     {
@@ -82,7 +82,7 @@ void m_db_die(DB *db)
 
 int dbs_validate(Dbs *dbs)
 {
-    die("todo dbs_validate");
+    fatal("todo dbs_validate");
     // chain has no gaps
     // chain height == blocks count
     // all block heights in chain point to blocks listing identical block heights
@@ -111,16 +111,16 @@ Dbs *m_dbs_init()
     return dbs;
 }
 
-void dbs_die(Dbs *dbs)
+void dbs_fatal(Dbs *dbs)
 {
     free(dbs->mempool->txs);
     free(dbs->mempool);
 
-    m_db_die(dbs->blocks);
-    m_db_die(dbs->chain);
-    m_db_die(dbs->limbo);
-    m_db_die(dbs->txs);
-    m_db_die(dbs->nodes);
+    m_db_fatal(dbs->blocks);
+    m_db_fatal(dbs->chain);
+    m_db_fatal(dbs->limbo);
+    m_db_fatal(dbs->txs);
+    m_db_fatal(dbs->nodes);
 
     free(dbs);
     dbs = NULL;
@@ -317,7 +317,7 @@ void data_chain_safe_set(Dbs *dbs, uchar *block_hash)
 
 void data_chain_set(Dbs *dbs, uint height, uchar *hash)
 {
-    die("use data_chain_safe_set"); //TODO optional
+    fatal("use data_chain_safe_set"); //TODO optional
     DBT key = new_dbt(&height, sizeof(uint));
     DBT dat = new_dbt(hash, SIZE_SHA256);
     //not finished anyway
@@ -348,7 +348,7 @@ uint _data_VAR_get_height(DBT dbt)
 
     int ret = dbt->cursor(dbt, NULL, &dbc, 0);
     if (ret != 0)
-        die("failed to init cursor in _data_VAR_get_height");
+        fatal("failed to init cursor in _data_VAR_get_height");
 
     key = new_dbt(block_hash, SIZE_SHA256);
     dat = new_dbt(block, block_header);
@@ -445,7 +445,7 @@ void data_limbo_scan(Dbs *dbs, Network *network)
     DBC *dbc;
     int ret = dbt->cursor(dbt, NULL, &dbc, DB_LAST);
     if (ret != 0)
-        die("failed to init cursor in limbo_scan");
+        fatal("failed to init cursor in limbo_scan");
 
     // Cursor dbt`s
     uint index; // Represents the current height in limbo
@@ -553,61 +553,52 @@ int data_nodes_get_initial(Peer *peer)
 /*******************************
 ** "mempool" struct functions **
 *******************************/
-
+// Note that all mutex locking shall be done
+// by the callers of these functions.
+// This is because the mempool should be locked
+// out for the entire duration of any mempool
+// operations.
 uint data_mempool_get_size(Dbs *dbs)
 {
-    pthread_mutex_lock(dbs->mempool->mutex);
-    
     return dbs->mempool->count;
-    
-    pthread_mutex_unlock(dbs->mempool->mutex);
 }
 
-Tx *data_mempool_get(Dbs *dbs, uint index)
+M_tx *data_mempool_get(Dbs *dbs, uint index)
 {
-    pthread_mutex_lock(dbs->mempool->mutex);
-    
     if (index >= dbs->mempool->count)
         return NULL;
 
-    Tx *retval = dbs->mempool->txs[i];
-    
-    pthread_mutex_unlock(dbs->mempool->mutex);
-    return retval;
+    return dbs->mempool->txs[i];
 }
 
-void data_mempool_add(Dbs *dbs, Tx *tx)
+void data_mempool_add(Dbs *dbs, uchar *data)
 {
-    if (data_mempool_exists(dbs, tx->hash)
+    if (data_mempool_exists(dbs, hash)
         return;
-    pthread_mutex_lock(dbs->mempool->mutex);
     
+    M_tx tx;
+    tx.size = tx_compute_size(data);
+    tx.hash = malloc(SIZE_SHA256);
+    tx.data = malloc(tx.size);
+    tx.max = size;
+    tx_compute_hash(tx.data, tx.hash);
+
     dbs->mempool->txs[dbs->mempool->count] = tx;
     dbs->mempool->count++;
-
-    pthread_mutex_unlock(dbs->mempool->mutex);
 }
 
 int data_mempool_exists(Dbs *dbs, uchar *hash)
 {
-    int retval = 0;
-    pthread_mutex_lock(dbs->mempool->mutex);
-    
     uint count = dbs->mempool->count;
     for (int i=0; i<count; i++)
         if (memcmp(dbs->mempool->txs[i]->hash, hash, SIZE_SHA256) == 0)
-            retval = 1;
-    
-    pthread_mutex_unlock(dbs->mempool->mutex);
-    
-    return retval;    
+            return 1;
+    return 0;
 }
 
-Tx *data_mempool_del(Dbs *dbs, uchar *hash)
+M_tx *data_mempool_del(Dbs *dbs, uchar *hash)
 {
-    pthread_mutex_lock(dbs->mempool->mutex);
-
-    Tx *retval = NULL;
+    M_tx *retval = NULL;
     uint size = dbs->mempool->size;
     for (int i=0; i<size; i++)
     {
@@ -619,8 +610,8 @@ Tx *data_mempool_del(Dbs *dbs, uchar *hash)
                 dbs->mempool->txs[i] = dbs->mempool->txs[size];
             
             dbs->mempool->txs[size] = NULL;
+            break;
         }
     }
-    pthread_mutex_unlock(dbs->mempool->mutex);
     return retval;
 }

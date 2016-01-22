@@ -19,7 +19,7 @@ typedef struct
 
 
 Queue *queue_init();
-void queue_die(Queue *q);
+void queue_fatal(Queue *q);
 void queue_enqueue(Queue *q, uchar *data, uint size);
 
 uint queue_dequeue(Queue *q, uchar *dest);
