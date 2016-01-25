@@ -14,7 +14,7 @@ uint get_curr_time();
 
 uint btoui(uchar *bytes);
 ushort btous(uchar *bytes);
-void ustob(uchar *dest);
-void uitob(uchar *dest);
+void ustob(ushort a, uchar *dest);
+void uitob(uint a, uchar *dest);
 
 #endif

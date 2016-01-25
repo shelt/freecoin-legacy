@@ -31,11 +31,12 @@ DBT new_dbt(uchar *data, uint size);                //internal
 DBT new_pdbt(uchar *data, uint psize, uint pstart); //internal
 int db_put(DB *db, DBT *key, DBT *dat);             //internal
 int db_get(DB *db, DBT *key, DBT *dat);             //internal
+int db_exists(DB *db, DBT *key);                    //internal
 DB m_db_init(const char *path, uint type);
-void m_db_fatal(DB *db);
+void m_db_die(DB *db);
 int dbs_validate(Dbs *dbs);
 Dbs *m_dbs_init();
-void dbs_fatal(Dbs *dbs);
+void dbs_die(Dbs *dbs);
 
 int data_blocks_revert(
                        Dbs *dbs,
@@ -45,18 +46,22 @@ int data_blocks_revert(
 void data_blocks_add(Dbs *dbs, uchar *block);
 int data_blocks_get(Dbs *dbs, uchar* hash, uchar *dest);
 int data_blocks_get_header(Dbs *dbs, uchar *hash, uchar *dest);
+int data_blocks_exists(Dbs *dbs, uchar *hash);
 
 void data_txs_add(Dbs *dbs, uchar *tx_hash, uchar *block_hash);
+int data_txs_exists(Dbs *dbs, uchar *hash);
 
 void data_chain_safe_set(Dbs *dbs, uchar *block_hash);
 void data_chain_set(Dbs *dbs, uint height, uchar *hash);
 int data_chain_get(Dbs *dbs, uint height, uchar *dest);
+int data_chain_exists(Dbs *dbs, uint height, uchar *hash); ////////TODO
 uint data_chain_get_height(Dbs *dbs);
 
 uint _data_VAR_get_height(DBT dbt);
 
 uint data_limbo_get_height(Dbs *dbs);
 void data_limbo_safe_add(Dbs *dbs, uchar *block);
+int data_limbo_exists(Dbs *dbs, uint height, uchar *hash); ////////TODO
 void data_limbo_del(Dbs *dbs, uchar *block);
 void data_limbo_scan(Dbs *dbs, Network *network);
 int data_limbo_scan_can_trace_back(

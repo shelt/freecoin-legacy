@@ -73,13 +73,13 @@ ushort btous(uchar *bytes)
     return ntohs((ushort)((bytes[0] << 8) | bytes[1]));
 }
 
-void ustob(uchar *dest)
+void ustob(ushort a, uchar *dest)
 {
     dest[0] = a >> 8  & 0xFF;
     dest[1] = a       & 0xFF;
 }
 
-void uitob(uchar *dest)
+void uitob(uint a, uchar *dest)
 {
     dest[0] = a >> 24 & 0xFF;
     dest[1] = a >> 16 & 0xFF;

@@ -129,7 +129,7 @@ int main(int argc, char **argv)
         v_printf("WORKBLOCK: Adding coinbase transaction...");
         uchar *coinbase_output = malloc(SIZE_TX_OUT);
         r_tx_out_gen(miner_addr, MINING_REWARD, coinbase_output);
-        Tx *coinbase_tx = m_tx_gen(0, 1, 0, NULL, &coinbase_output);
+        M_tx *coinbase_tx = m_tx_gen(0, 1, 0, NULL, &coinbase_output);
         block_add_tx(workblock, coinbase_tx);
         free(coinbase_output);
         

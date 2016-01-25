@@ -4,6 +4,8 @@
 #include "queue.h"
 #include "network.h"
 #include "data.h"
+#include "blocks.h"
+#include "validation.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -92,8 +94,9 @@ void *handle_connection(void *vpeer)
         // Parsing
         if (ntohs(btous(&msg[POS_MSG_VERSION])) != __VERSION)
         {
-            resp[0] = ERR_BAD_VERSION;
-            sendto_peer(peer, CTYPE_REJECT, resp, 1);
+            resp[CTYPE_REJECT_POS_ERRORTYPE] = ERR_BAD_VERSION;
+            memset(&resp[CTYPE_REJECT_POS_INFO_SIZE], 0x00, 4);
+            sendto_peer(peer, CTYPE_REJECT, resp, 5);
             break;
         }
         
@@ -106,16 +109,16 @@ void *handle_connection(void *vpeer)
         }
         else if (ctype == CTYPE_GETBLOCKS)
         {
-            int count = build_block_list(peer->network->dbs, &msg[CTYPE_GETBLOCKS_POS_START_BLOCK], msg[CTYPE_GETBLOCKS_POS_BLOCK_COUNT], &resp[2]);
-            resp[0] = DTYPE_BLOCK;
-            resp[1] = count;
+            int count = build_block_list(peer->network->dbs, &msg[CTYPE_GETBLOCKS_POS_START_BLOCK], msg[CTYPE_GETBLOCKS_POS_BLOCK_COUNT], &resp[CTYPE_INV_POS_IDS]);
+            resp[CTYPE_INV_POS_DATATYPE]  = DTYPE_BLOCK;
+            resp[CTYPE_INV_POS_IDS_COUNT] = count;
             sendto_peer(peer, CTYPE_INV, resp, 2 + (count * SIZE_SHA256));
         }
         else if (ctype == CTYPE_MEMPOOL)
         {
-            int count = build_mempool_list(peer->network->dbs, &resp[2]);
-            resp[0] = DTYPE_TX;
-            resp[1] = count;
+            int count = build_mempool_list(peer->network->dbs, &resp[CTYPE_INV_POS_IDS]);
+            resp[CTYPE_INV_POS_DATATYPE]  = DTYPE_TX;
+            resp[CTYPE_INV_POS_IDS_COUNT] = count;
             sendto_peer(peer, CTYPE_INV, resp, 2 + (count * SIZE_SHA256));
         }
 
@@ -124,16 +127,16 @@ void *handle_connection(void *vpeer)
             uchar dtype = msg[CTYPE_INV_POS_DATATYPE];
             if (dtype == DTYPE_BLOCK)
             {
-                int count = build_missing_blocks_list(peer->network->dbs, &msg[CTYPE_INV_POS_DATA_IDS], msg[CTYPE_INV_POS_DATA_IDS_COUNT], &resp[2]);
-                resp[0] = DTYPE_BLOCK;
-                resp[1] = count;
+                int count = build_missing_blocks_list(peer->network->dbs, &msg[CTYPE_INV_POS_IDS], msg[CTYPE_INV_POS_IDS_COUNT], &resp[CTYPE_GETDATA_POS_IDS]);
+                resp[CTYPE_GETDATA_POS_DATATYPE]  = DTYPE_BLOCK;
+                resp[CTYPE_GETDATA_POS_IDS_COUNT] = count;
                 sendto_peer(peer, CTYPE_GETDATA, resp, 2 + (count * SIZE_SHA256));
             }
             else if (dtype == DTYPE_TX)
             {
-                int count = build_missing_tx_list(peer->network->dbs, &msg[CTYPE_INV_POS_DATA_IDS], msg[CTYPE_INV_POS_DATA_IDS_COUNT], &resp[2]);
-                resp[0] = DTYPE_TX;
-                resp[1] = count;
+                int count = build_missing_tx_list(peer->network->dbs, &msg[CTYPE_INV_POS_IDS], msg[CTYPE_INV_POS_IDS_COUNT], &resp[CTYPE_GETDATA_POS_IDS]);
+                resp[CTYPE_GETDATA_POS_DATATYPE]  = DTYPE_TX;
+                resp[CTYPE_GETDATA_POS_IDS_COUNT] = count;
                 sendto_peer(peer, CTYPE_GETDATA, resp, 2 + (count * SIZE_SHA256));
             }
         }
@@ -142,41 +145,42 @@ void *handle_connection(void *vpeer)
             uchar dtype = msg[CTYPE_GETDATA_POS_DATATYPE];
             if (dtype == DTYPE_BLOCK)
             {
-                uchar count = msg[CTYPE_GETDATA_POS_DATA_IDS_COUNT];
+                uchar count = msg[CTYPE_GETDATA_POS_IDS_COUNT];
                 uchar max = count * SIZE_SHA256;
-                for (int i=CTYPE_GETDATA_POS_DATA_IDS; i<max; i+=SIZE_SHA256)
-                    if (data_blocks_exists(peer->network->dbs, &msg[i])
+                for (int i=CTYPE_GETDATA_POS_IDS; i<max; i+=SIZE_SHA256)
+                    if (data_blocks_exists(peer->network->dbs, &msg[i]))
                     {
-                        data_blocks_get(peer->network->dbs, &msg[i], &resp[4]);
-                        uint size = block_get_size(&resp[i+4]);
-                        uitob(size, resp);
+                        data_blocks_get(peer->network->dbs, &msg[i], &resp[CTYPE_BLOCK_POS_BLOCK]);
+                        uint size = block_compute_size(&resp[CTYPE_BLOCK_POS_BLOCK]);
+                        uitob(size, &resp[CTYPE_BLOCK_POS_SIZE]);
                         sendto_peer(peer, CTYPE_BLOCK, resp, 4 + size);
                     }
             }
             else if (dtype == DTYPE_TX)
             {
-                pthread_mutex_lock(peer->network->dbs->mempool->mutex);
-                uchar count = msg[CTYPE_GETDATA_POS_DATA_IDS_COUNT];
-                for (int i=CTYPE_GETDATA_POS_DATA_IDS; i<max; i+=SIZE_SHA256)
-                    if (data_mempool_exists(peer->network->dbs, &msg[i])
+                pthread_mutex_lock(&peer->network->dbs->mempool->mutex);
+                uchar count = msg[CTYPE_GETDATA_POS_IDS_COUNT];
+                for (int i=CTYPE_GETDATA_POS_IDS; i<count; i+=SIZE_SHA256)
+                    if (data_mempool_exists(peer->network->dbs, &msg[i]))
                     {
-                        data_mempool_get(peer->network->dbs, &msg[i], &resp[4]);
-                        uint size = tx_get_size(&resp[i+4]);
-                        uitob(size, resp);
+                        M_tx *tx = data_mempool_get(peer->network->dbs, i);
+                        uint size = tx->size;
+                        memcpy(&resp[CTYPE_TX_POS_TX], tx->data, size);
+                        uitob(size, &resp[CTYPE_TX_POS_SIZE]);
                         sendto_peer(peer, CTYPE_TX, resp, 4 + size);
                     }
-                pthread_mutex_unlock(peer->network->dbs->mempool->mutex);
+                pthread_mutex_unlock(&peer->network->dbs->mempool->mutex);
             }
             else if (dtype == DTYPE_NODE)
             {
-                pthread_mutex_lock(peer->network->peers_mutex);
+                pthread_mutex_lock(&peer->network->peers_mutex);
                 uchar count = peer->network->peers_count;
                 for (int i=0; i<count; i++)
                 {
-                    int len = peer->network->peers[i].addrlen;
-                    ustob(peer->network->peers[i].port, resp);
-                    ustob(len, &resp[2]);
-                    memcpy(&resp[4], peer->network->peers[i].addr, len);
+                    int len = peer->network->peers[i]->addr_len;
+                    ustob(peer->network->peers[i]->port, &resp[CTYPE_PEER_POS_PORT]);
+                    ustob(len, &resp[CTYPE_PEER_POS_ADDR_LEN]);
+                    memcpy(&resp[CTYPE_PEER_POS_ADDR], peer->network->peers[i]->addr, len);
                     sendto_peer(peer, CTYPE_PEER, resp, 4 + len);
                 }
                 pthread_mutex_unlock(&peer->network->peers_mutex);
@@ -200,10 +204,10 @@ void *handle_connection(void *vpeer)
                ( height > 2 && ((height - 2) >= curr_height))) // 2 or more greater than
             {
                 data_limbo_add(peer->network->dbs, block);
-                // Notify peers
-                block_compute_hash(block, &resp[2]);
-                resp[0] = DTYPE_BLOCK;
-                resp[1] = 1;
+                // Find missing block
+                block_compute_hash(block, &resp[CTYPE_INV_POS_IDS]);
+                resp[CTYPE_GETDATA_POS_DATATYPE]  = DTYPE_BLOCK;
+                resp[CTYPE_GETDATA_POS_IDS_COUNT] = 1;
                 sendto_peer(peer, CTYPE_GETDATA, resp, 2 + SIZE_SHA256);
             }
             else if ((height-1) == curr_height) // 1 greater than
@@ -211,7 +215,10 @@ void *handle_connection(void *vpeer)
                 if (memcmp(&block[prev_hash],
                            curr_hash,
                            SIZE_SHA256) == 0)
-                    data_chain_add(peer->network->dbs, block);
+                {
+                    data_chain_safe_set(peer->network->dbs, block);
+                    // Notify peers TODO
+                }
                 else
                     data_limbo_add(peer->network->dbs, block);
             }
@@ -220,7 +227,7 @@ void *handle_connection(void *vpeer)
         }
         else if (ctype == CTYPE_TX)
         {
-            pthread_mutex_lock(peer->network->dbs->mempool->mutex);
+            pthread_mutex_lock(&peer->network->dbs->mempool->mutex);
             if (peer-network->mempool->count < MAX_MEMPOOL_SIZE)
             {
                 ushort in_count = btous(&msg[CTYPE_TX_POS_BODY + POS_TX_IN_COUNT]);
@@ -235,7 +242,7 @@ void *handle_connection(void *vpeer)
                                    );
                 data_mempool_add(peer->network->dbs, tx);
             }
-            pthread_mutex_unlock(peer->network->dbs->mempool->mutex);
+            pthread_mutex_unlock(&peer->network->dbs->mempool->mutex);
         }
         else if (ctype == CTYPE_PEER)
         {

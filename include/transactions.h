@@ -21,7 +21,7 @@ M_tx m_tx_gen(
               uchar *ins,
               uchar *outs
               );
-void m_tx_fatal(M_tx tx);
+void m_tx_die(M_tx tx);
 void r_tx_gen(
               ushort in_count,
               ushort out_count,

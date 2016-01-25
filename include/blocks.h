@@ -12,7 +12,7 @@ void block_add_header(
                       );
 void block_inc_nonce(uchar *block);
 void block_update_root(uchar *block);
-void block_add_tx(uchar *block, Tx *tx);
+void block_add_tx(uchar *block, M_tx *tx);
 uint block_compute_size(uchar *block);
 
 

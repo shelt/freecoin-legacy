@@ -221,7 +221,7 @@ typedef struct _s_Dbs Dbs;
 #define CTYPE_TX_POS_TX 4
 
 #define CTYPE_PEER_POS_PORT 0
-#define CTYPE_PEER_POS_ADDRLEN 2
+#define CTYPE_PEER_POS_ADDR_LEN 2
 #define CTYPE_PEER_POS_ADDR 4
 
 #define CTYPE_ALERT_POS_TYPE 0

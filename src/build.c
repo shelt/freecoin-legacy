@@ -6,7 +6,7 @@
     Most are used for transmission in network.c
 /*
     Compiles a list of block hashes from a startblock (non inclusive)
-    to `count` blocks forewards.
+    to `count` blocks forwards.
     Mainly used in limbo_scan() and networking.
 */
 uchar build_block_list(Dbs *dbs, uchar *startblock, uchar req_blocks, uchar *dest)
@@ -64,4 +64,15 @@ uchar build_missing_blocks_list(Dbs *dbs, uchar *list, uchar count, uchar *dest)
 
 
 //dont add more to the dest if our mempool exeeds MAX_MEMPOOL_SIZE. which should be set to the MAX_BLOCK_SIZE - SIZE_BLOCK_HEADER
-uchar build_missing_tx_list();
+uchar build_missing_tx_list(Dbs *dbs, uchar *list, uchar count, uchar *dest)
+{
+    int missing = 0;
+    for (int i=0; i<count; i++)
+    {
+        if ( ! data_txs_exists(dbs, &list[i * SIZE_SHA256]))
+            memcpy(&dest[SIZE_SHA256 * missing++], &list[i * SIZE_SHA256], SIZE_SHA256); //TODO precompute indices
+        if (missing == 255)
+            break;
+    }
+    return missing;
+}

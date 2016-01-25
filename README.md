@@ -366,6 +366,7 @@ TODO noexist
 
 #### Validating a transaction input
 - `ref_tx` must be in our blockchain. If not, this procedure should return `ERR_TX_BAD_REF`, which should be passed to the source of this transaction.
+- The `out_index`th output of the `ref_tx` must not be spent elsewhere in the chain.
 - The `out_index`th output of the `ref_tx` must have an `out_address` which is a valid address of `pubkey`.
 - `sig` must be a valid RSA signature of (`ref_tx` .. `out_index`).
 - The current time (or the time of the block) must be equal to or greater than `lock_time`.

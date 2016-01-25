@@ -73,7 +73,7 @@ void block_update_root(uchar *block)
                         );
 }
 
-void block_add_tx(uchar *block, Tx *tx)
+void block_add_tx(uchar *block, M_tx *tx)
 {
     uint size = block_compute_size(block);
     if ((size + tx->size) >= MAX_BLOCK_SIZE)

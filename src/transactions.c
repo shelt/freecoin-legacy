@@ -54,7 +54,7 @@ M_tx m_tx_gen(
     
     return tx;
 }
-void m_tx_fatal(M_tx tx)
+void m_tx_die(M_tx tx)
 {
     if (tx.data != NULL)
     {

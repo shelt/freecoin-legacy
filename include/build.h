@@ -10,6 +10,6 @@ uchar build_mempool_list(Dbs *dbs, uchar *dest);
 
 uchar build_missing_blocks_list(Dbs *dbs, uchar *list, uchar count, uchar *dest);
 
-
+uchar build_missing_tx_list(Dbs *dbs, uchar *list, uchar count, uchar *dest);
 
 #endif

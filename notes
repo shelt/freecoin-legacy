@@ -1,8 +1,10 @@
 ## CURRENT TODO ##
+Determining block validity with respect to chains
 Prune network.c and ensure that:
-startup() which checks to see if block db is nonexistant. If it is, create it and add the initial block (which is hardcoded).
+- startup() which checks to see if block db is nonexistant. If it is, create it and add the initial block (which is hardcoded).
 - all data assembly is done in build.c in the most DRY way possible
-
+move all existing function descriptions to header files.
+add nonexistant definitions to header files.
 
 
 ## DEFINITIONS ##

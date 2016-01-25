@@ -41,6 +41,11 @@ int db_get(DB *db, DBT *key, DBT *dat)
     return db->get(db, NULL, key, dat, 0);
 }
 
+int db_exists(DB *db, DBT *key)
+{
+    return db->exists(db, NULL, key, 0);
+}
+
 DB m_db_init(const char *path, uint type)
 {
     DB *db = malloc(sizeof(Db));
@@ -61,7 +66,7 @@ DB m_db_init(const char *path, uint type)
 
     return db
 }
-void m_db_fatal(DB *db)
+void m_db_die(DB *db)
 {
     if (db != NULL)
     {
@@ -79,15 +84,6 @@ void m_db_fatal(DB *db)
 //remove txs which reference nonexistant blocks
 //remove old limbo blocks and respective limbo references
 
-
-int dbs_validate(Dbs *dbs)
-{
-    fatal("todo dbs_validate");
-    // chain has no gaps
-    // chain height == blocks count
-    // all block heights in chain point to blocks listing identical block heights
-    // all txs are found in specified block heights
-}
 
 Dbs *m_dbs_init()
 {
@@ -111,16 +107,16 @@ Dbs *m_dbs_init()
     return dbs;
 }
 
-void dbs_fatal(Dbs *dbs)
+void dbs_die(Dbs *dbs)
 {
     free(dbs->mempool->txs);
     free(dbs->mempool);
 
-    m_db_fatal(dbs->blocks);
-    m_db_fatal(dbs->chain);
-    m_db_fatal(dbs->limbo);
-    m_db_fatal(dbs->txs);
-    m_db_fatal(dbs->nodes);
+    m_db_die(dbs->blocks);
+    m_db_die(dbs->chain);
+    m_db_die(dbs->limbo);
+    m_db_die(dbs->txs);
+    m_db_die(dbs->nodes);
 
     free(dbs);
     dbs = NULL;
@@ -215,7 +211,8 @@ int data_blocks_revert(
 
         // Move block to to chain
         data_limbo_del(dbs, curr_block);
-        data_chain_set(dbs, curr_block); //assumes new highest block is higher than old one TODO
+        data_chain_safe_set(dbs, curr_block); //assumes new highest block is higher than old one TODO
+        // TODO notify peers using build_block_list
 
         block_get_prev_hash(curr_block, curr_block_hash);
     }
@@ -282,6 +279,16 @@ int data_blocks_get_header(Dbs *dbs, uchar *hash, uchar *dest)
     return ret;
 }
 
+int data_blocks_exists(Dbs *dbs, uchar *hash)
+{
+    DBT key = new_dbt(hash, SIZE_SHA256);
+    int ret = db_exists(dbs->blocks, &key);
+    if (ret == 0)
+        return 1;
+    else
+        return 0;
+}
+
 /*****************************
 ** "txs" database functions **
 *****************************/
@@ -293,6 +300,16 @@ void data_txs_add(Dbs *dbs, uchar *tx_hash, uchar *block_hash)
     int ret = db_put(dbs->txs, &key, &dat);
     if (ret != 0)
         printf("error %d on txs db", ret);
+}
+
+int data_txs_exists(Dbs *dbs, uchar *hash)
+{
+    DBT key = new_dbt(hash, SIZE_SHA256);
+    int ret = db_exists(dbs->txs, &key);
+    if (ret == 0)
+        return 1;
+    else
+        return 0;
 }
 
 
@@ -331,6 +348,25 @@ int data_chain_get(Dbs *dbs, uint height, uchar *dest)
     
     return ret;
 }
+
+/*
+    Check if a specified height in the blockchain
+    is associated with a specific block.
+*/
+int data_chain_exists(Dbs *dbs, uint height, uchar *hash)
+{
+    int retval = 0;
+    uchar *buffer = malloc(SIZE_SHA256);
+    int ret = data_chain_get(dbs, height, buffer);
+    if (ret != 0)
+        return 0;
+    if (memcmp(buffer, hash, SIZE_SHA256) == 0)
+        retval = 1;
+    
+    free(buffer);
+    return retval;
+}
+
 uint data_chain_get_height(Dbs *dbs)
 {
     return _data_VAR_get_height(dbs->chain);
@@ -404,7 +440,11 @@ void data_limbo_safe_add(Dbs *dbs, uchar *block)
         printf("error %d on limbo db add put", ret);
 }
 
-//TODO same as above notice
+int data_limbo_exists(Dbs *dbs, uint height, uchar *hash)
+{
+    // TODO
+}
+
 void data_limbo_del(Dbs *dbs, uchar *block)
 {
     // Compute block hash
@@ -489,28 +529,14 @@ void data_limbo_scan(Dbs *dbs, Network *network)
     free(inv_hash_buffer);
 }
 
-/*
-    Returns 1 if a block can be traced back to a block in the chain
-    using blocks in limbo. Returns 0 if the chain formed from start_hash
-    never encounters the blockchain (or after REASONABLE_CONFIRMATIONS is passed,
-    at which point it becomes infeasible that we will find a shared block anyway).
-*/
+//TODO MOVING: These functions are now deprecated and should be replaced with functions found in validation.c.
 int data_limbo_scan_can_trace_back(
                                    Dbs *dbs,
                                    uchar *start_hash,
                                    uchar *end_hash
                                    )
 {
-    int ret = 0;
-    uchar *buffer = malloc(BLOCK_HEADER_SIZE);
-    uchar *start_hash_buffer = malloc(SIZE_SHA256);
-    memcpy(start_hash_buffer, start_hash, SIZE_SHA256);
 
-    ret = _data_limbo_scan_can_trace_back(dbs, start_hash_buffer, end_hash, buffer);
-    
-    free(start_hash_buffer);
-    free(block_buffer);
-    return ret;
 }
 
 /*
@@ -524,20 +550,7 @@ int _data_limbo_scan_can_trace_back(
                                     uchar *buffer
                                     )
 {
-    int ret = 0;
-    data_blocks_get_header(dbs, start_hash, buffer);
-    if (btoui(&buffer[POS_BLOCK_HEIGHT]) > (data_chain_get_height() - REASONABLE_CONFIRMATIONS))
-    {
-        if (data_chain_exists(dbs, start_hash))
-            ret = 1;
-        else
-        {
-            memcpy(start_hash, &buffer[POS_BLOCK_PREV_HASH], SIZE_SHA256);
-            
-            ret = _data_limbo_scan_can_trace_back(dbs, start_hash, end_hash, buffer);
-        }
-    }
-    return ret;
+
 }
 
 /******************************
