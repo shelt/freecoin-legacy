@@ -2,7 +2,6 @@
 #include "shared.h"
 #include "crypto.h"
 
-// DBL_INT_ADD treats two unsigned ints a and b as one 64-bit integer and adds c to it
 #define DBL_INT_ADD(a,b,c) if (a > 0xffffffff - (c)) ++b; a += c;
 #define ROTLEFT(a,b) (((a) << (b)) | ((a) >> (32-(b))))
 #define ROTRIGHT(a,b) (((a) >> (b)) | ((a) << (32-(b))))
@@ -128,7 +127,6 @@ void sha256_final(SHA256_CTX *ctx, uchar hash[])
       memset(ctx->data,0,56); 
    }  
    
-   // Append to the padding the total message's length in bits and transform. 
    DBL_INT_ADD(ctx->bitlen[0],ctx->bitlen[1],ctx->datalen * 8);
    ctx->data[63] = ctx->bitlen[0]; 
    ctx->data[62] = ctx->bitlen[0] >> 8; 
@@ -140,8 +138,6 @@ void sha256_final(SHA256_CTX *ctx, uchar hash[])
    ctx->data[56] = ctx->bitlen[1] >> 24; 
    sha256_transform(ctx,ctx->data);
    
-   // Since this implementation uses little endian byte ordering and SHA uses big endian,
-   // reverse all the bytes when copying the final state to the output hash. 
    for (i=0; i < 4; ++i)
    { 
       hash[i]    = (ctx->state[0]);// >> (24-i*8)) & 0x000000ff;
